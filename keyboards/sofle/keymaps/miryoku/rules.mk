@@ -5,7 +5,7 @@ USER_NAME = manna-harbour_miryoku
 # Miryoku build options. Set here so they are the default for every build
 # (local and CI); override per build on the command line, e.g.
 #   make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH
-MIRYOKU_ALPHAS = QWERTY
+MIRYOKU_ALPHAS = QWERTZ
 
 # Per-key LEDs: RGB Matrix (see config.h). RGBLIGHT is off by default, stated
 # here so enabling it later cannot happen by accident.

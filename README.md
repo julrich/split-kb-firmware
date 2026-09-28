@@ -123,11 +123,24 @@ Lighting is RGB Matrix on the Sofle's own LED layout: pressed keys pulse
 (`RGB_MATRIX_SOLID_REACTIVE_SIMPLE`) and the static blue accents are drawn as LED
 indicators. Firmware size is 27654/28672 bytes.
 
-Alphas are **QWERTY** by default — `MIRYOKU_ALPHAS = QWERTY` lives in the
+Alphas are **QWERTZ** by default — `MIRYOKU_ALPHAS = QWERTZ` lives in the
 keymap's `rules.mk` so it applies to local builds and CI alike. Any Miryoku
 option can be overridden per build, e.g.
 `make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH` or
 `qmk compile -kb sofle/rev1 -km miryoku -e MIRYOKU_NAV=INVERTEDT`.
+
+**German umlauts** (German host layout assumed) are placed where a German
+keyboard has them:
+
+| key | usage | types |
+|---|---|---|
+| home row, next to `L` (Miryoku's own cell) | `KC_SCLN` | `ö` |
+| home row, outermost (unused by Miryoku) | `KC_QUOT` | `ä` |
+| top row, outermost (unused by Miryoku) | `KC_LBRC` | `ü` |
+
+The `ö` cell is a layer substitution in `users/manna-harbour_miryoku/custom_config.h`
+(Miryoku's supported mechanism); `ä`/`ü` are in the keymap's `LAYOUT_miryoku`.
+`ß` stays where Miryoku keeps it (Num layer).
 
 Miryoku maps 36 of the Sofle's 60 keys; the rest are unused. Capabilities the
 old personal keymap had and this one does not (numpad layer, runtime layout

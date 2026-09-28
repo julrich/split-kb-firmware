@@ -9,9 +9,18 @@
 
 #define XXX KC_NO
 
-// Sofle rev1 (60 keys, LAYOUT) -> Miryoku (3x5 + 3 thumbs per hand).
+// Sofle rev1 (60 keys, LAYOUT) -> Miryoku (3x5 + 3 thumbs per hand), German.
 // Miryoku's columns map to Sofle columns 1-5; Sofle column 0, the number row,
-// the two encoder-adjacent keys and the outer thumb keys are unused (KC_NO).
+// the two encoder-adjacent keys and the outer thumb keys are unused (KC_NO) --
+// except the two outermost right-hand keys, which carry the umlauts a German
+// layout puts there. "ü" above "ä", both one key outward from the "ö" next to L
+// (that cell is Miryoku's own, substituted in custom_config.h).
+//
+// Usages on a German host layout (QMK's keymap_german.h names them DE_UDIA etc.,
+// but that header cannot be included from here: config.h is also pulled into the
+// assembly translation units; see the DE_* aliases there if you need them):
+//   KC_LBRC ("[{")  = ü        KC_QUOT ("'\"")  = ä        KC_SCLN (";:") = ö
+//   KC_MINS ("-_")  = ß  (Miryoku keeps that one on the Num layer)
 #define LAYOUT_miryoku( \
       K00,  K01,  K02,  K03,  K04,                   K05,  K06,  K07,  K08,  K09, \
       K10,  K11,  K12,  K13,  K14,                   K15,  K16,  K17,  K18,  K19, \
@@ -20,8 +29,8 @@
 ) \
 LAYOUT( \
 XXX,  XXX,  XXX,  XXX,  XXX,  XXX,                 XXX,  XXX,  XXX,  XXX,  XXX,  XXX, \
-XXX,  K00,  K01,  K02,  K03,  K04,                 K05,  K06,  K07,  K08,  K09,  XXX, \
-XXX,  K10,  K11,  K12,  K13,  K14,                 K15,  K16,  K17,  K18,  K19,  XXX, \
+XXX,  K00,  K01,  K02,  K03,  K04,                 K05,  K06,  K07,  K08,  K09,  KC_LBRC, \
+XXX,  K10,  K11,  K12,  K13,  K14,                 K15,  K16,  K17,  K18,  K19,  KC_QUOT, \
 XXX,  K20,  K21,  K22,  K23,  K24,  XXX,     XXX,  K25,  K26,  K27,  K28,  K29,  XXX, \
                 XXX,  XXX,  K32,  K33,  K34,      K35,  K36,  K37,  XXX,  XXX \
 )

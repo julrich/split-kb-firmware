@@ -93,7 +93,7 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 | feature | implementation |
 |---|---|
 | Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout (72 LEDs, 58 under keys, in `keyboards/sofle/info.json`). Default mode `RGB_MATRIX_SOLID_REACTIVE_SIMPLE` — the key you press pulses and fades. Static blue accents are drawn in `rgb_matrix_indicators_advanced_user()` from `accent_leds[]` |
-| OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, the compiled alphas (`Qwrt` by default, see `rules.mk`), active layer name |
+| OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, the compiled alphas (`Qwrtz` by default, see `rules.mk`), active layer name |
 | OLED (slave) | `render_logo()`, 128x32 bitmap, default rotation |
 | Encoders | `encoder_update_user()`: index 0 = volume, index 1 = `MS_WHLU`/`MS_WHLD` |
 
@@ -124,10 +124,12 @@ Three deliberate cleanups vs. the old fork:
 
 ## 4. Not here (yet): what the old `julrich` keymap had
 
-Miryoku maps **36 of the Sofle's 60 keys**. Unmapped (all `KC_NO` in `config.h`):
-the whole number row (12 keys), the leftmost column (4), the two
-encoder-adjacent keys, and the four outer thumb keys. Numbers live on Miryoku's
-Num layer. That free space is where anything below would go.
+Miryoku maps **36 of the Sofle's 60 keys**. Still unused: the whole number row
+(12 keys), the four outermost keys of the left hand, the two encoder-adjacent
+keys, and the four outer thumb keys. (The right hand's outermost column is no
+longer unused — its top and home keys now carry `ü` and `ä`, see §6.) Numbers
+live on Miryoku's Num layer. Whatever free keys remain are where anything below
+would go.
 
 | julrich capability | old implementation | now |
 |---|---|---|
@@ -283,13 +285,28 @@ with `lsusb`: 77798 bytes (local `avr-gcc`) and `-DMIRYOKU_ALPHAS_QWERTY` in
 - Modern names: `RGBLIGHT_LED_COUNT` (not `RGBLED_NUM`), `UG_*` (not `RGB_*`),
   `MS_WHLU`/`MS_WHLD` (not `KC_WH_U`/`KC_WH_D`), lower-case driver names
   (`OLED_DRIVER = ssd1306`).
-- Miryoku build options: the keymap's `rules.mk` sets `MIRYOKU_ALPHAS = QWERTY`
+- Miryoku build options: the keymap's `rules.mk` sets `MIRYOKU_ALPHAS = QWERTZ`
   as the default for every build (local and CI). Any option can be overridden on
   the command line, which beats the file — e.g.
   `make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH` (verified: the override
   switches the define and the OLED label). Values are case-insensitive; the full
   option list is in `.github/workflows/test-all-configs.yml` in the Miryoku
   source and `users/manna-harbour_miryoku/readme.org`.
+- German build: `users/manna-harbour_miryoku/custom_config.h` substitutes the
+  base/extra/tap layers (guarded by `#if defined(MIRYOKU_ALPHAS_QWERTZ)`) so the
+  cell Miryoku leaves as `KC_QUOT` — which a German host renders as `ä` — sends
+  `KC_SCLN`, i.e. `ö`. The `ä` and `ü` keys are the two outermost right-hand keys
+  in `LAYOUT_miryoku`. Verified in the compiled array: home row reads
+  `ä, ö(LGUI_T), L, K, J, H` outer-to-inner, top row `ü, P, O, I, U, Z`.
+- **Never `#include` a QMK header from `config.h`.** `config.h` is pulled into the
+  assembly translation units (e.g. `platforms/avr/xprintf.S`), so adding
+  `keymap_german.h` (which brings in `keycodes.h`) fails with
+  `Error: junk at end of line` from the assembler. Use the raw keycodes and
+  document the intent, or include the header in a `.c` file.
+- A German host layout makes several Miryoku keys render as German punctuation
+  (the `/` key types `-`, Sym's `KC_COLN` types `Ö`, Num's `KC_MINS`/`KC_LBRC`
+  type `ß`/`ü`). `'` is *not* reachable on this build — on a German layout that
+  is `Shift`+`#`, and Miryoku has no `#`/NUHS key.
 - The QMK CLI is repo-versioned: `userspace-*` subcommands only exist while
   `QMK_HOME` points at the modern submodule.
 - Before claiming a change works, run both (a) and (c) above. Firmware must stay
@@ -335,9 +352,10 @@ labels):
 | `l` | `00 00 0c …` | `i` | right half matrix + split link |
 | `a` + Num held | `00 00 33 …` | `;` | `LT(U_NUM, KC_BSPC)` on the right half engaged the layer, and the left half resolved `a` as `NUM` home-row col 1 (`KC_SCLN`) |
 
-With the current **QWERTY** default those same four keys report `a`, `t`, `n`,
-`l` (0x04, 0x17, 0x11, 0x0f) instead — the layer tables are unaffected, so
-`a` + Num still yields `;`.
+With the current **QWERTZ / German** build the base layer reads
+`… l ö ä` (outer-to-inner home row), so a capture of those three keys plus the
+outermost top key should show HID `0x33` (ö), `0x34` (ä), `0x2F` (ü) and the Z/Y
+swap: physical `y` → `0x1D` (Z), physical `z` → `0x1C` (Y).
 
 Thumb keys (Miryoku defaults — "inner thumb" is ambiguous, so here is the map):
 
