@@ -93,7 +93,7 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 | feature | implementation |
 |---|---|
 | Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout (72 LEDs, 58 under keys, in `keyboards/sofle/info.json`). Default mode `RGB_MATRIX_SOLID_REACTIVE_SIMPLE` — the key you press pulses and fades. Static blue accents are drawn in `rgb_matrix_indicators_advanced_user()` from `accent_leds[]` |
-| OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, compiled alphas, active layer name |
+| OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, the compiled alphas (`Qwrt` by default, see `rules.mk`), active layer name |
 | OLED (slave) | `render_logo()`, 128x32 bitmap, default rotation |
 | Encoders | `encoder_update_user()`: index 0 = volume, index 1 = `MS_WHLU`/`MS_WHLD` |
 
@@ -255,10 +255,13 @@ make sofle/rev1:miryoku:flash SKIP_GIT=1
 - Modern names: `RGBLIGHT_LED_COUNT` (not `RGBLED_NUM`), `UG_*` (not `RGB_*`),
   `MS_WHLU`/`MS_WHLD` (not `KC_WH_U`/`KC_WH_D`), lower-case driver names
   (`OLED_DRIVER = ssd1306`).
-- Miryoku build options keep working and are exercised in CI-less local builds:
-  `make sofle/rev1:miryoku MIRYOKU_ALPHAS=QWERTY` (or `qmk compile -e ...`).
-  Values are case-insensitive; see `.github/workflows/test-all-configs.yml` in
-  the Miryoku source and `users/manna-harbour_miryoku/readme.org`.
+- Miryoku build options: the keymap's `rules.mk` sets `MIRYOKU_ALPHAS = QWERTY`
+  as the default for every build (local and CI). Any option can be overridden on
+  the command line, which beats the file — e.g.
+  `make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH` (verified: the override
+  switches the define and the OLED label). Values are case-insensitive; the full
+  option list is in `.github/workflows/test-all-configs.yml` in the Miryoku
+  source and `users/manna-harbour_miryoku/readme.org`.
 - The QMK CLI is repo-versioned: `userspace-*` subcommands only exist while
   `QMK_HOME` points at the modern submodule.
 - Before claiming a change works, run both (a) and (c) above. Firmware must stay
@@ -292,8 +295,9 @@ resolved it. Consumer (volume/media), mouse and encoder reports leave over other
 HID interfaces that have **no** hidraw node — those need `sudo evtest` or the
 host's own OSD.
 
-Verified 2026-09-28 with both halves on this firmware (physical QWERTY keycap
-labels, Miryoku's default Colemak-DH base):
+Verified 2026-09-28 with both halves on this firmware, **with the Colemak-DH
+default that was in place before the QWERTY switch** (physical QWERTY keycap
+labels):
 
 | physical key | report | keycode | proves |
 |---|---|---|---|
@@ -302,6 +306,10 @@ labels, Miryoku's default Colemak-DH base):
 | `n` | `00 00 0e …` | `k` | right half matrix + split link |
 | `l` | `00 00 0c …` | `i` | right half matrix + split link |
 | `a` + Num held | `00 00 33 …` | `;` | `LT(U_NUM, KC_BSPC)` on the right half engaged the layer, and the left half resolved `a` as `NUM` home-row col 1 (`KC_SCLN`) |
+
+With the current **QWERTY** default those same four keys report `a`, `t`, `n`,
+`l` (0x04, 0x17, 0x11, 0x0f) instead — the layer tables are unaffected, so
+`a` + Num still yields `;`.
 
 Thumb keys (Miryoku defaults — "inner thumb" is ambiguous, so here is the map):
 

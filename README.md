@@ -123,6 +123,12 @@ Lighting is RGB Matrix on the Sofle's own LED layout: pressed keys pulse
 (`RGB_MATRIX_SOLID_REACTIVE_SIMPLE`) and the static blue accents are drawn as LED
 indicators. Firmware size is 27654/28672 bytes.
 
+Alphas are **QWERTY** by default — `MIRYOKU_ALPHAS = QWERTY` lives in the
+keymap's `rules.mk` so it applies to local builds and CI alike. Any Miryoku
+option can be overridden per build, e.g.
+`make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH` or
+`qmk compile -kb sofle/rev1 -km miryoku -e MIRYOKU_NAV=INVERTEDT`.
+
 Miryoku maps 36 of the Sofle's 60 keys; the rest are unused. Capabilities the
 old personal keymap had and this one does not (numpad layer, runtime layout
 switching, tri-layer, `EE_CLR`, brightness, suspend, Discord mute, per-layer RGB
