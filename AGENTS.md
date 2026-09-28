@@ -226,6 +226,34 @@ make sofle/rev1:miryoku:flash SKIP_GIT=1
 make sofle/rev1:miryoku:flash SKIP_GIT=1
 ```
 
+#### Which half did I just flash?
+
+Both halves are **identical on USB** — same VID/PID (`fc32:0287`), no serial — so
+neither `lsusb` nor the flash output says which board was written. The flash
+command simply waits for *any* ATmega32u4 in DFU mode, so forgetting to move the
+cable silently flashes the same half twice (happened on 2026-09-28; the left half
+got the build twice and the right half kept the previous one).
+
+The kernel log is the ground truth, and it distinguishes the two cases:
+
+| journal signature | meaning |
+|---|---|
+| `fc32:0287 Sofle` → `03eb:2ff4 ATm32U4DFU` → `Sofle` | a flash (same board) |
+| `fc32:0287 Sofle` → `fc32:0287 Sofle` (new device number) | **cable moved** to the other half |
+
+```sh
+journalctl -k --since "-10 min" | grep "usb [0-9-]*:" | grep -E "USB disconnect|Product:"
+```
+
+Check for the `Sofle → Sofle` transition before trusting that step 2 really
+targets the other half. Device numbers increase monotonically, so a cable move
+is easy to spot (e.g. device 26 → 27 at 20:46:51, then the right-half write at
+20:47:09 shows 27 → `ATm32U4DFU` → 29).
+
+Both halves then run the **same** artifact — verify with the build output, not
+with `lsusb`: 77798 bytes (local `avr-gcc`) and `-DMIRYOKU_ALPHAS_QWERTY` in
+`qmk_firmware/.build/obj_sofle_rev1_miryoku/cflags.txt`.
+
 - The TRRS cable between the halves may stay connected, but **never plug or
   unplug TRRS while USB is connected** — that can kill the controllers.
 - Success looks like `dfu-programmer` erasing/programming/resetting the chip,
