@@ -32,10 +32,13 @@ cd .. && git add qmk_firmware && git commit -m "chore: bump QMK to <sha>"
 
 ## Build
 
-Prerequisites: QMK CLI (`python3 -m pip install qmk`), `avr-gcc`, and the
+Prerequisites: the `qmk` CLI (installed with pipx, see below), `avr-gcc`, and the
 submodules QMK needs for AVR:
 
 ```sh
+pipx install qmk
+pipx inject qmk -r "$(realpath qmk_firmware)/requirements.txt" appdirs
+
 git submodule update --init --depth 1 qmk_firmware
 cd qmk_firmware && git submodule update --init --depth 1 lib/lufa lib/printf
 ```
@@ -43,17 +46,20 @@ cd qmk_firmware && git submodule update --init --depth 1 lib/lufa lib/printf
 ### Local (recommended)
 
 ```sh
-qmk config user.overlay_dir="$(realpath .)"     # once
-qmk compile -kb sofle/rev1 -km miryoku
-qmk compile -kb sofle/rev1 -km miryoku -e MIRYOKU_ALPHAS=QWERTY
-qmk flash -kb sofle/rev1 -km miryoku
-```
-
-Without touching the global QMK config:
-
-```sh
 QMK_HOME="$(realpath qmk_firmware)" QMK_USERSPACE="$(realpath .)" \
   qmk compile -kb sofle/rev1 -km miryoku
+QMK_HOME="$(realpath qmk_firmware)" QMK_USERSPACE="$(realpath .)" \
+  qmk compile -kb sofle/rev1 -km miryoku -e MIRYOKU_ALPHAS=QWERTY
+```
+
+Both variables are set explicitly on purpose: while the old fork still lives at
+`~/qmk_firmware`, a bare `qmk compile` resolves `QMK_HOME` to *that* tree.
+
+One-off alternative, if you no longer need to build the old fork:
+
+```sh
+qmk config user.qmk_home="$(realpath qmk_firmware)" user.overlay_dir="$(realpath .)"
+qmk compile -kb sofle/rev1 -km miryoku
 ```
 
 ### Make wrapper
@@ -76,7 +82,18 @@ files. Enable Actions in the repository settings after the first push.
 
 ## Flashing
 
-`qmk flash -kb sofle/rev1 -km miryoku` — needs `dfu-programmer` and the board in
-DFU mode (double-tap reset). The bootloader is overridden to `atmel-dfu` from the
-keymap's `rules.mk` (the stock Sofle declares `caterina`). Flash both halves;
-`MASTER_LEFT`.
+`qmk flash -kb sofle/rev1 -km miryoku` — needs `dfu-programmer`
+(`sudo pacman -S dfu-programmer`) and the board in DFU mode (double-tap reset).
+The bootloader is overridden to `atmel-dfu` from the keymap's `rules.mk` (the
+stock Sofle declares `caterina`). Flash both halves; `MASTER_LEFT`.
+
+Lighting is RGB Matrix on the Sofle's own LED layout: pressed keys pulse
+(`RGB_MATRIX_SOLID_REACTIVE_SIMPLE`) and the static blue accents are drawn as
+LED indicators. Firmware size is 27654/28672 bytes.
+
+## Layout
+
+- `keyboards/sofle/keymaps/miryoku/config.h` — Sofle→Miryoku key mapping and
+  lighting config
+- `keyboards/sofle/keymaps/miryoku/keymap.c` — RGB accents, both OLEDs, encoders
+- `users/manna-harbour_miryoku/` — vendored Miryoku (layers, options, docs)
