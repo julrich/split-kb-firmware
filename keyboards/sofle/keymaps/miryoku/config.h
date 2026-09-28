@@ -9,9 +9,9 @@
 
 #define XXX KC_NO
 
-// Sofle rev1 (60 keys, LAYOUT) -> Miryoku (3x5 + 2 thumbs per hand).
-// Miryoku's columns map to Sofle columns 1-5; Sofle column 0, the two
-// encoder-adjacent keys and the outer thumb keys are unused (KC_NO).
+// Sofle rev1 (60 keys, LAYOUT) -> Miryoku (3x5 + 3 thumbs per hand).
+// Miryoku's columns map to Sofle columns 1-5; Sofle column 0, the number row,
+// the two encoder-adjacent keys and the outer thumb keys are unused (KC_NO).
 #define LAYOUT_miryoku( \
       K00,  K01,  K02,  K03,  K04,                   K05,  K06,  K07,  K08,  K09, \
       K10,  K11,  K12,  K13,  K14,                   K15,  K16,  K17,  K18,  K19, \
@@ -32,32 +32,19 @@ XXX,  K20,  K21,  K22,  K23,  K24,  XXX,     XXX,  K25,  K26,  K27,  K28,  K29, 
 
 #define ENCODER_DIRECTION_FLIP
 
-#define RGBLIGHT_SLEEP
-#define RGBLIGHT_LAYERS
+// The WS2812 pin, the split LED counts and the per-key LED layout are declared
+// by the Sofle itself (keyboards/sofle/info.json: ws2812.pin, rgb_matrix.layout),
+// so nothing about the strip needs to be repeated here.
 
-/* ws2812 RGB LED */
-#define RGB_DI_PIN D3
+// Per-key LEDs are driven by RGB Matrix rather than RGBLIGHT: the keyboard's
+// own LED layout gives every key a position, which is what the keypress-reactive
+// effects need. The static blue accents are drawn in keymap.c.
+#define RGB_MATRIX_KEYPRESSES
+#define ENABLE_RGB_MATRIX_SOLID_REACTIVE_SIMPLE
+#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_SOLID_REACTIVE_SIMPLE
 
-#ifdef RGBLIGHT_ENABLE
-    #undef RGBLIGHT_LED_COUNT
-
-    // Only the static base effect is used; the animated effects cost flash and
-    // are overridden by the lighting layers anyway.
-    #undef RGBLIGHT_EFFECT_BREATHING
-    #undef RGBLIGHT_EFFECT_RAINBOW_MOOD
-    #undef RGBLIGHT_EFFECT_RAINBOW_SWIRL
-    #undef RGBLIGHT_EFFECT_SNAKE
-    #undef RGBLIGHT_EFFECT_KNIGHT
-    #undef RGBLIGHT_EFFECT_CHRISTMAS
-    #undef RGBLIGHT_EFFECT_STATIC_GRADIENT
-    #undef RGBLIGHT_EFFECT_RGB_TEST
-    #undef RGBLIGHT_EFFECT_ALTERNATING
-    #undef RGBLIGHT_EFFECT_TWINKLE
-
-    #define RGBLIGHT_LED_COUNT 72
-    #define RGBLED_SPLIT { 36, 36 }
-    #define RGBLIGHT_LIMIT_VAL 120
-    #define RGBLIGHT_HUE_STEP 10
-    #define RGBLIGHT_SAT_STEP 17
-    #define RGBLIGHT_VAL_STEP 17
-#endif
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 120
+#define RGB_MATRIX_HUE_STEP 8
+#define RGB_MATRIX_SAT_STEP 8
+#define RGB_MATRIX_VAL_STEP 8
+#define RGB_MATRIX_SPD_STEP 10

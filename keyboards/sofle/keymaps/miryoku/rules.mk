@@ -2,13 +2,15 @@
 BOOTLOADER = atmel-dfu
 USER_NAME = manna-harbour_miryoku
 
-RGBLIGHT_ENABLE = yes
-ENCODER_ENABLE = yes
-OLED_ENABLE = yes
-OLED_DRIVER = ssd1306
+# Per-key LEDs: RGB Matrix (see config.h). RGBLIGHT is off by default, stated
+# here so enabling it later cannot happen by accident.
+RGBLIGHT_ENABLE = no
+RGB_MATRIX_ENABLE = yes
 LTO_ENABLE = yes
 
-# Trim core features that are not used (flash is tight on the ATmega32u4).
+# Encoder, OLED, mouse keys and extra keys are already enabled by the Sofle's
+# own keyboard.json; only the unused core features are trimmed here because
+# flash is tight on the ATmega32u4.
 AUDIO_ENABLE = no
 MAGIC_ENABLE = no
 SPACE_CADET_ENABLE = no

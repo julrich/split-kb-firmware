@@ -13,42 +13,44 @@
 
 // --------------------------------------------------------------------- RGB --
 
+// Sofle rev1 LED ids (indexes into the rgb_matrix layout in
+// keyboards/sofle/info.json): 0 and 36 are the indicator LEDs, 1-6 and 37-42
+// the underglow, the rest sit under keys. This is the set of LEDs the previous
+// RGBLIGHT lighting layer ended up lighting, kept identical so the look does
+// not change.
 #define INDICATOR_BRIGHTNESS 30
 
-#define HSV_OVERRIDE_HELP(h, s, v, Override) h, s, Override
-#define HSV_OVERRIDE(hsv, Override) HSV_OVERRIDE_HELP(hsv, Override)
+static const uint8_t accent_leds[] = {
+    1,  2,  3,  4,  5,  6,        // left underglow
+    7,  8,  9,  10,               // left outer column
+    25, 26,                       // left thumb cluster
+    33, 34, 35,                   // left inner column
+    36, 37, 38, 39, 40, 41,       // right indicator + underglow
+    42, 43, 44, 45,               // right outer column
+    60, 61,                       // right thumb cluster
+    68, 69, 70, 71,               // right inner column
+};
 
-// LED clusters. Sofle rev1 has 36 LEDs per half; index N and 35 + N address the
-// same position on the left and right half.
-#define SET_INNER_COL(hsv)     {33, 4, hsv}, {35 + 33, 4, hsv}
-#define SET_OUTER_COL(hsv)     {7, 4, hsv}, {35 + 7, 4, hsv}
-#define SET_THUMB_CLUSTER(hsv) {25, 2, hsv}, {35 + 25, 2, hsv}
-#define SET_LAYER_ID(hsv) \
-    {0, 1, HSV_OVERRIDE_HELP(hsv, INDICATOR_BRIGHTNESS)}, \
-    {35 + 0, 1, HSV_OVERRIDE_HELP(hsv, INDICATOR_BRIGHTNESS)}, \
-    {1, 6, hsv}, {35 + 1, 6, hsv}, \
-    {7, 4, hsv}, {35 + 7, 4, hsv}, \
-    {25, 2, hsv}, {35 + 25, 2, hsv}
+#ifdef RGB_MATRIX_ENABLE
 
-#ifdef RGBLIGHT_ENABLE
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    hsv_t accent_hsv = {HSV_BLUE};
+    rgb_t accent     = hsv_to_rgb(accent_hsv);
 
-const rgblight_segment_t PROGMEM layer_miryoku_lights[] = RGBLIGHT_LAYER_SEGMENTS(
-    SET_LAYER_ID(HSV_BLUE),
-    SET_INNER_COL(HSV_BLUE),
-    SET_OUTER_COL(HSV_BLUE),
-    SET_THUMB_CLUSTER(HSV_BLUE));
+    for (uint8_t i = 0; i < ARRAY_SIZE(accent_leds); i++) {
+        uint8_t led = accent_leds[i];
+        if (led >= led_min && led < led_max) {
+            rgb_matrix_set_color(led, accent.r, accent.g, accent.b);
+        }
+    }
 
-const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
-    layer_miryoku_lights);
+    if (led_min == 0) {
+        hsv_t layer_id_hsv = {accent_hsv.h, accent_hsv.s, INDICATOR_BRIGHTNESS};
+        rgb_t layer_id     = hsv_to_rgb(layer_id_hsv);
+        rgb_matrix_set_color(0, layer_id.r, layer_id.g, layer_id.b);
+    }
 
-layer_state_t layer_state_set_user(layer_state_t state) {
-    rgblight_set_layer_state(0, true);
-    return state;
-}
-
-void keyboard_post_init_user(void) {
-    rgblight_layers = my_rgb_layers;
-    rgblight_enable();
+    return false;
 }
 
 #endif
