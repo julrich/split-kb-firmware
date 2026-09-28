@@ -285,19 +285,26 @@ with `lsusb`: 77798 bytes (local `avr-gcc`) and `-DMIRYOKU_ALPHAS_QWERTY` in
 - Modern names: `RGBLIGHT_LED_COUNT` (not `RGBLED_NUM`), `UG_*` (not `RGB_*`),
   `MS_WHLU`/`MS_WHLD` (not `KC_WH_U`/`KC_WH_D`), lower-case driver names
   (`OLED_DRIVER = ssd1306`).
-- Miryoku build options: the keymap's `rules.mk` sets `MIRYOKU_ALPHAS = QWERTZ`
+- Miryoku build options: the keymap's `rules.mk` sets `MIRYOKU_ALPHAS = QWERTY`
   as the default for every build (local and CI). Any option can be overridden on
   the command line, which beats the file — e.g.
   `make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH` (verified: the override
   switches the define and the OLED label). Values are case-insensitive; the full
   option list is in `.github/workflows/test-all-configs.yml` in the Miryoku
   source and `users/manna-harbour_miryoku/readme.org`.
+- **`MIRYOKU_ALPHAS=QWERTZ` is for a *US* host.** HID usages are positions; the
+  host layout maps them to characters. A German host already maps the US `y`
+  position (0x1C) → `z` and the US `z` position (0x1D) → `y`. Miryoku's QWERTZ
+  alphas move the usages to the German positions, so on a German host the two
+  swaps cancel and every key types its US legend (seen on 2026-09-28: "y still
+  prints y, z still prints z"). With `MIRYOKU_ALPHAS=QWERTY` and a `de` host the
+  result is German-correct: the key labelled `y` types `z`.
 - German build: `users/manna-harbour_miryoku/custom_config.h` substitutes the
-  base/extra/tap layers (guarded by `#if defined(MIRYOKU_ALPHAS_QWERTZ)`) so the
+  base/extra/tap layers (guarded by `#if defined(MIRYOKU_ALPHAS_QWERTY)`) so the
   cell Miryoku leaves as `KC_QUOT` — which a German host renders as `ä` — sends
   `KC_SCLN`, i.e. `ö`. The `ä` and `ü` keys are the two outermost right-hand keys
   in `LAYOUT_miryoku`. Verified in the compiled array: home row reads
-  `ä, ö(LGUI_T), L, K, J, H` outer-to-inner, top row `ü, P, O, I, U, Z`.
+  `ä, ö(LGUI_T), L, K, J, H` outer-to-inner, top row `ü, P, O, I, U, Y`.
 - **Never `#include` a QMK header from `config.h`.** `config.h` is pulled into the
   assembly translation units (e.g. `platforms/avr/xprintf.S`), so adding
   `keymap_german.h` (which brings in `keycodes.h`) fails with
@@ -352,10 +359,11 @@ labels):
 | `l` | `00 00 0c …` | `i` | right half matrix + split link |
 | `a` + Num held | `00 00 33 …` | `;` | `LT(U_NUM, KC_BSPC)` on the right half engaged the layer, and the left half resolved `a` as `NUM` home-row col 1 (`KC_SCLN`) |
 
-With the current **QWERTZ / German** build the base layer reads
-`… l ö ä` (outer-to-inner home row), so a capture of those three keys plus the
-outermost top key should show HID `0x33` (ö), `0x34` (ä), `0x2F` (ü) and the Z/Y
-swap: physical `y` → `0x1D` (Z), physical `z` → `0x1C` (Y).
+With the current **German (QWERTY alphas + German host)** build the base layer
+reads `… l ö ä` outer-to-inner on the home row, so a capture of those three keys
+plus the outermost top key should show HID `0x33` (ö), `0x34` (ä) and `0x2F` (ü),
+while the Z/Y keys report the plain US usages — physical `y` → `0x1C`, physical
+`z` → `0x1D` — and the `de` host renders those as `z` and `y`.
 
 Thumb keys (Miryoku defaults — "inner thumb" is ambiguous, so here is the map):
 

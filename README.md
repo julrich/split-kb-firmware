@@ -123,9 +123,16 @@ Lighting is RGB Matrix on the Sofle's own LED layout: pressed keys pulse
 (`RGB_MATRIX_SOLID_REACTIVE_SIMPLE`) and the static blue accents are drawn as LED
 indicators. Firmware size is 27654/28672 bytes.
 
-Alphas are **QWERTZ** by default — `MIRYOKU_ALPHAS = QWERTZ` lives in the
-keymap's `rules.mk` so it applies to local builds and CI alike. Any Miryoku
-option can be overridden per build, e.g.
+Alphas are **QWERTY** by default (`MIRYOKU_ALPHAS = QWERTY` in the keymap's
+`rules.mk`, so local builds and CI agree). That is deliberate even for a German
+keyboard: **HID usages are positions, and the German host layout performs the
+Z/Y swap itself.** `MIRYOKU_ALPHAS=QWERTZ` moves the usages to where a German
+keyboard has them, so on a German host the two swaps cancel and every key types
+its US legend. QWERTZ alphas is for a *US* host. Net effect with QWERTY alphas
+and the `de` layout: the key labelled `y` types `z`, the key labelled `z` types
+`y`.
+
+Any Miryoku option can be overridden per build, e.g.
 `make sofle/rev1:miryoku MIRYOKU_ALPHAS=COLEMAKDH` or
 `qmk compile -kb sofle/rev1 -km miryoku -e MIRYOKU_NAV=INVERTEDT`.
 
