@@ -77,8 +77,10 @@ qmk userspace-compile      # builds everything in qmk.json
 ```
 
 Pushing to GitHub runs `.github/workflows/build_binaries.yaml`, which builds all
-`qmk.json` targets against the submodule pin and publishes a Release with the hex
-files. Enable Actions in the repository settings after the first push.
+`qmk.json` targets **against the pinned submodule** (the reusable workflow skips
+its own `qmk_firmware` checkout when the submodule is present) and publishes a
+Release with the hex files. Actions is enabled by default — the first run
+happens on the first push.
 
 ## Flashing
 
