@@ -201,6 +201,21 @@ once the bootloader is up.)
 
 ### Both halves
 
+Observed success (left half, 2026-09-28):
+
+```
+Flashing for bootloader: atmel-dfu
+Bootloader Version: 0x00 (0)
+Checking memory from 0x0 to 0x6FFF...  Not blank at 0x1.
+Erasing flash...  Success
+Programming 0x6C80 bytes...
+Success
+Reading 0x7000 bytes...
+Success
+Validating...  Success
+0x6C80 bytes written into 0x7000 bytes memory (96.88%).
+```
+
 ```sh
 # 1. left half (master) — host cable normally lives here
 #    double-tap its reset button (or hold its top-left key while plugging USB in)
