@@ -1,0 +1,12 @@
+# Firmware build outputs (qmk userspace-compile drops them here)
+*.bin
+*.hex
+*.uf2
+*.elf
+*.map
+*.lst
+
+# Local build aids
+compile_commands.json
+.cache/
+.clangd/
