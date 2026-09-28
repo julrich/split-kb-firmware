@@ -82,7 +82,7 @@ qmk config user.qmk_home="$(realpath qmk_firmware)" user.overlay_dir="$(realpath
 ```
 
 Current size: **27654 / 28672 bytes (96%, 1018 free)** on `atmega32u4`. That is
-the binding constraint — check the number after every change, see §5.
+the binding constraint — check the number after every change, see §6.
 
 ## 3. What is in the keymap (and why)
 
@@ -122,30 +122,108 @@ Three deliberate cleanups vs. the old fork:
   `config.h`: `ws2812.pin`, `rgblight`/`rgb_matrix` counts and the LED layout all
   come from the keyboard.
 
-## 4. Flashing
+## 4. Not here (yet): what the old `julrich` keymap had
+
+Miryoku maps **36 of the Sofle's 60 keys**. Unmapped (all `KC_NO` in `config.h`):
+the whole number row (12 keys), the leftmost column (4), the two
+encoder-adjacent keys, and the four outer thumb keys. Numbers live on Miryoku's
+Num layer. That free space is where anything below would go.
+
+| julrich capability | old implementation | now |
+|---|---|---|
+| Numpad layer | `_NUMPAD` on `LT(_NUMPAD, KC_TAB)`: `KC_P0`-`KC_P9`, `KC_NUM`, `OSM(MOD_MEH)` | absent |
+| Runtime layout switching | `KC_QWERTY`/`KC_COLEMAK`/`KC_COLEMAKDH`/`KC_MIRYOKU` → `set_single_persistent_default_layer()` | absent — Miryoku picks alphas at build time (`MIRYOKU_ALPHAS=`) |
+| Tri-layer | `update_tri_layer(_LOWER, _RAISE, _ADJUST)` | absent |
+| Discord mute | `KC_D_MUTE` (MEH+Up) on the encoder-adjacent key | absent, key unmapped |
+| EEPROM reset | `EE_CLR` on `_ADJUST`/`_SWITCH` | absent — use Bootmagic at power-up (§5) |
+| Screen brightness | `KC_BRIU` on `_SWITCH` | absent |
+| Suspend | `KC_SYSTEM_SLEEP` on `_SWITCH` | absent |
+| Desk switching | `C(G(KC_LEFT))` / `C(G(KC_RGHT))` on `_ADJUST` | absent |
+| Layer jumps | `_SWITCH` overlay with `TO(0)`…`TO(6)` | absent |
+| Per-layer RGB colours | 7 RGBLIGHT lighting layers (red/pink/teal/blue/purple/orange/green) | replaced by the static blue accents + reactive pulse |
+| OLED brand line | `Dane Evans` + default-layer name | replaced by `TSNM` + compiled alphas + live layer |
+| Encoder 1 per layer | PGUP/PGDN on base, UP/DOWN on lower/raise, wheel elsewhere | wheel only (unchanged from the old Sofle-Miryoku keymap) |
+
+Carried over from `julrich`: `MASTER_LEFT`, `ENCODER_DIRECTION_FLIP`,
+`USB_MAX_POWER_CONSUMPTION 100`, the RGB brightness cap, tap-hold behaviour
+(`QUICK_TAP_TERM 0`), and — via Miryoku itself — `QK_BOOT` (double-tap the
+additional-features key), media transport + mute (Media layer) and RGB
+toggle/hue/sat/val/next (Media layer, `UG_*`).
+
+Re-adding any of these: `users/manna-harbour_miryoku/custom_config.h` is
+Miryoku's supported place to substitute/add layers and per-layer mappings — use
+it instead of editing the vendored tree. Keycode-level extras (brightness,
+suspend, `EE_CLR`, numpad) fit there or in this keymap's `config.h`/`keymap.c`.
+
+## 5. Flashing — exact process
+
+`atmel-dfu`, `MASTER_LEFT`, no `EE_HANDS` ⇒ **both halves run the identical
+firmware**; they are two independent MCUs, so each is flashed over its own USB
+port, one at a time.
 
 ```sh
+# run from the userspace root, once per half:
 make sofle/rev1:miryoku:flash SKIP_GIT=1
-# or: QMK_HOME="$(realpath qmk_firmware)" QMK_USERSPACE="$(realpath .)" qmk flash -kb sofle/rev1 -km miryoku
 ```
 
-`dfu-programmer` is required and **is not currently installed** (a system
-cleanup removed it, along with `avrdude`/`dfu-util`, on 2025-12-14):
+`dfu-programmer` (installed; `dfu-programmer 1.1.0`) and the udev rules
+(`/etc/udev/rules.d/50-qmk.rules`, Jan 2023) are the only host prerequisites.
+`BOOTLOADER = atmel-dfu` comes from the keymap's `rules.mk`, which is included
+after the keyboard's generated rules and therefore overrides the Sofle's stock
+`caterina` (verified: `-DBOOTLOADER_ATMEL_DFU` in the build flags).
+
+The command builds first, then hands over to `dfu-programmer` — and if no device
+is in DFU mode it **waits and retries every 0.5 s** (observed: `Bootloader not
+found. Make sure the board is in bootloader mode.` / `Trying again every 0.5s
+(Ctrl+C to cancel)`). So the comfortable order is: start the command, then enter
+the bootloader on that half while it is waiting; it picks the board up and
+flashes. Ctrl+C cancels. (A full flash of both halves takes well under a minute
+once the bootloader is up.)
+
+### Entering the bootloader — three ways
+
+1. **Reset button, twice, quickly.** The Pro Micro's reset button sits next to
+   the TRRS jack. A single press only restarts the MCU; the *double* tap lands in
+   DFU (the upstream Sofle readme puts it as "briefly press the button near the
+   TRRS connector — quickly double-tap if you are using Pro Micro"). This is the
+   "double-tap reset" the QMK/Sofle docs mean.
+2. **Bootmagic Lite: hold the matrix (0,0) key while plugging the half into
+   USB.** On the left half that is its top-left (outermost-top) key — `Esc` in
+   the old keymaps, unmapped in Miryoku, which does not matter because Bootmagic
+   reads the matrix rather than the keymap; on the right half, the equivalent
+   outermost-top key of that half. `bootmagic_scan()` also calls
+   `eeconfig_disable()`, so this route **wipes the stored EEPROM config** as
+   well — the clean slate if settings ever look wrong.
+3. **Keycode.** Miryoku puts `QK_BOOT` behind a double tap on the
+   additional-features key. The old `julrich` firmware had it plainly on
+   `_SWITCH`/`_ADJUST`, so if a half still runs that firmware this works right
+   now.
+
+### Both halves
 
 ```sh
-sudo pacman -S dfu-programmer
+# 1. left half (master) — host cable normally lives here
+#    double-tap its reset button (or hold its top-left key while plugging USB in)
+make sofle/rev1:miryoku:flash SKIP_GIT=1
+
+# 2. right half (slave) — move the USB cable to the right half
+#    double-tap *its* reset button
+make sofle/rev1:miryoku:flash SKIP_GIT=1
 ```
 
-udev rules for user-level USB access already exist
-(`/etc/udev/rules.d/50-qmk.rules`, from Jan 2023). Put the half into DFU mode
-(double-tap reset) and flash.
+- The TRRS cable between the halves may stay connected, but **never plug or
+  unplug TRRS while USB is connected** — that can kill the controllers.
+- Success looks like `dfu-programmer` erasing/programming/resetting the chip,
+  after which the half re-enumerates as `fc32:0287 JosefAdamcik Sofle` instead of
+  the bootloader's `03eb:2ff4 Atmel`. `lsusb` is the quick check.
+- Both halves must be flashed after any change: `MASTER_LEFT` means the left half
+  talks to the host, but the right half renders its own LEDs/OLED and runs the
+  same code.
+- EEPROM: the 2022 fork used `EECONFIG_MAGIC_NUMBER` `0xFEE7`, current QMK uses
+  `0xFEE3`, so the first boot on this firmware re-initialises the stored config
+  by itself. If anything still behaves oddly, flash via route 2 (Bootmagic) once.
 
-`BOOTLOADER = atmel-dfu` is set in the keymap's `rules.mk`; keymap `rules.mk` is
-included after the keyboard's generated rules, so it overrides the Sofle's stock
-`caterina` (verified: `-DBOOTLOADER_ATMEL_DFU` in the build flags).
-`MASTER_LEFT`, no `EE_HANDS` → flash **both** halves with the same hex.
-
-## 5. Conventions / traps
+## 6. Conventions / traps
 
 - Keymap directory names must match `[a-z0-9_]+`; the Miryoku user directory is
   linked by `USER_NAME = manna-harbour_miryoku` in the keymap `rules.mk`, not by
@@ -169,6 +247,7 @@ included after the keyboard's generated rules, so it overrides the Sofle's stock
 - The QMK CLI is repo-versioned: `userspace-*` subcommands only exist while
   `QMK_HOME` points at the modern submodule.
 - Before claiming a change works, run both (a) and (c) above. Firmware must stay
-  under 28672 bytes — the build prints the size. **There is no way to test
-  on-hardware behaviour here** (no `dfu-programmer`); state that explicitly and
-  let the user flash.
+  under 28672 bytes — the build prints the size. Flashing works from here
+  (`dfu-programmer` is installed, §5), but the board has to be put into DFU mode
+  by hand, and **key/OLED/LED behaviour can only be confirmed by the user** —
+  never claim on-hardware behaviour was verified.

@@ -84,18 +84,46 @@ happens on the first push.
 
 ## Flashing
 
-`qmk flash -kb sofle/rev1 -km miryoku` — needs `dfu-programmer`
-(`sudo pacman -S dfu-programmer`) and the board in DFU mode (double-tap reset).
-The bootloader is overridden to `atmel-dfu` from the keymap's `rules.mk` (the
-stock Sofle declares `caterina`). Flash both halves; `MASTER_LEFT`.
+Both halves run the **same** firmware (`MASTER_LEFT`, no `EE_HANDS`) but are
+separate MCUs, so each is flashed over its own USB port, one at a time:
 
-Lighting is RGB Matrix on the Sofle's own LED layout: pressed keys pulse
-(`RGB_MATRIX_SOLID_REACTIVE_SIMPLE`) and the static blue accents are drawn as
-LED indicators. Firmware size is 27654/28672 bytes.
+```sh
+make sofle/rev1:miryoku:flash SKIP_GIT=1     # per half, from this directory
+```
 
-## Layout
+The build runs first, then `dfu-programmer` looks for a board in DFU mode and, if
+it finds none, **waits — retrying every 0.5 s**. So the easy workflow is: start
+the command, then enter the bootloader on that half while it waits. Three ways
+in:
+
+1. **Double-tap the reset button** on that half's Pro Micro (next to the TRRS
+   jack) — two quick presses; a single press only restarts the MCU.
+2. **Hold the outermost-top key of that half while plugging in its USB** —
+   Bootmagic Lite. It also clears the stored EEPROM config, which is handy after
+   a firmware switch.
+3. **`QK_BOOT`** from the layout (Miryoku has it behind a double tap on the
+   additional-features key).
+
+Then move the USB cable to the other half, enter *its* bootloader and flash the
+same command. Success = the half re-enumerates as `fc32:0287 JosefAdamcik Sofle`
+(`lsusb`) instead of the bootloader's `03eb:2ff4 Atmel`.
+
+Never plug or unplug the TRRS cable while USB is connected. The bootloader is
+`atmel-dfu` (from the keymap's `rules.mk`; the stock Sofle declares `caterina`);
+`dfu-programmer` is required. Full detail: [AGENTS.md §5](AGENTS.md).
+
+## Layout and known gaps
 
 - `keyboards/sofle/keymaps/miryoku/config.h` — Sofle→Miryoku key mapping and
   lighting config
 - `keyboards/sofle/keymaps/miryoku/keymap.c` — RGB accents, both OLEDs, encoders
 - `users/manna-harbour_miryoku/` — vendored Miryoku (layers, options, docs)
+
+Lighting is RGB Matrix on the Sofle's own LED layout: pressed keys pulse
+(`RGB_MATRIX_SOLID_REACTIVE_SIMPLE`) and the static blue accents are drawn as LED
+indicators. Firmware size is 27654/28672 bytes.
+
+Miryoku maps 36 of the Sofle's 60 keys; the rest are unused. Capabilities the
+old personal keymap had and this one does not (numpad layer, runtime layout
+switching, tri-layer, `EE_CLR`, brightness, suspend, Discord mute, per-layer RGB
+colours) are listed in [AGENTS.md §4](AGENTS.md#4-not-here-yet-what-the-old-julrich-keymap-had).
