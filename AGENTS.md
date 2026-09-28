@@ -263,6 +263,53 @@ make sofle/rev1:miryoku:flash SKIP_GIT=1
   `QMK_HOME` points at the modern submodule.
 - Before claiming a change works, run both (a) and (c) above. Firmware must stay
   under 28672 bytes — the build prints the size. Flashing works from here
-  (`dfu-programmer` is installed, §5), but the board has to be put into DFU mode
-  by hand, and **key/OLED/LED behaviour can only be confirmed by the user** —
-  never claim on-hardware behaviour was verified.
+  (`dfu-programmer` is installed, §5) but the board has to be put into DFU mode by
+  hand, and only **keystrokes** can be verified from here (§7); OLED content, LED
+  effects and the encoders can only be confirmed by the user.
+
+## 7. Verifying the running firmware without root
+
+The QMK udev rules tag the board with `uaccess`, so the logged-in desktop user can
+read its `hidraw` nodes — no `sudo`, no membership in `input`. The keyboard
+interface is the one with `bInterfaceProtocol=1`:
+
+```sh
+for d in /sys/class/hidraw/hidraw*; do
+    n=$(grep -oP '(?<=HID_NAME=).*' "$d/device/uevent" 2>/dev/null)
+    case "$n" in *Sofle*)
+        echo "$d iface=$(cat "$d/device/../bInterfaceNumber") proto=$(cat "$d/device/../bInterfaceProtocol")";;
+    esac
+done
+# → /sys/class/hidraw/hidraw5 iface=0 proto=1  (boot keyboard)
+# → /sys/class/hidraw/hidraw6 iface=1 proto=0  (raw HID)
+
+timeout 60 stdbuf -oL xxd -p -c8 /dev/hidraw5   # 8 bytes: modifiers, rsvd, keycode[6]
+```
+
+Boot-protocol reports are enough to verify the matrix, the split link and the
+layer logic: each press/release is one report, and the keycode tells which layer
+resolved it. Consumer (volume/media), mouse and encoder reports leave over other
+HID interfaces that have **no** hidraw node — those need `sudo evtest` or the
+host's own OSD.
+
+Verified 2026-09-28 with both halves on this firmware (physical QWERTY keycap
+labels, Miryoku's default Colemak-DH base):
+
+| physical key | report | keycode | proves |
+|---|---|---|---|
+| `a` | `00 00 04 …` | `a` | base works on the left half |
+| `t` | `00 00 05 …` | `b` | alphas are Colemak-DH (QWERTY `T` → `B`) |
+| `n` | `00 00 0e …` | `k` | right half matrix + split link |
+| `l` | `00 00 0c …` | `i` | right half matrix + split link |
+| `a` + Num held | `00 00 33 …` | `;` | `LT(U_NUM, KC_BSPC)` on the right half engaged the layer, and the left half resolved `a` as `NUM` home-row col 1 (`KC_SCLN`) |
+
+Thumb keys (Miryoku defaults — "inner thumb" is ambiguous, so here is the map):
+
+| half | position | hold | tap |
+|---|---|---|---|
+| left | outermost of the three | Media | Esc |
+| left | middle | Nav | Space |
+| left | innermost, wide 1.5u | Mouse | Tab |
+| right | innermost, wide 1.5u | Sym | Enter |
+| right | middle | Num | Backspace |
+| right | outermost | Fun | Delete |
