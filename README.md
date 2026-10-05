@@ -117,7 +117,12 @@ Never plug or unplug the TRRS cable while USB is connected. The bootloader is
 ![Sofle rev1 / Miryoku layout with this board's caps](docs/sofle-layout.png)
 
 Every key: bold = what it sends (base layer, German host, decoded from the
-*compiled* keymap, tap-hold layers included), grey = the cap that is on the board.
+*compiled* keymap, tap-hold layers included); grey = the **key number**:
+each half counted from its inner edge outward and top to bottom — `L1`–`L6` /
+`R1`–`R6` the number row, six per row after that, `L25`–`L29` / `R25`–`R29` the
+thumbs (the wide inner one first). The tables below refer to keys by these
+numbers, so any cap legends on the board are irrelevant to them.
+
 Regenerate after a keymap change with:
 
 ```sh
@@ -125,24 +130,21 @@ python3 ~/gen_layout_svg.py docs/sofle-layout.svg
 rsvg-convert -z 1.6 docs/sofle-layout.svg -o docs/sofle-layout.png
 ```
 
-The caps are a Colemak-DH-ish set while the firmware runs QWERTY alphas (see
-below), so the two disagree in places — the schematic is the reliable reference.
-
 ### Layers
 
 Miryoku's ten layers, unchanged except for the German substitutions in
 `users/manna-harbour_miryoku/custom_config.h`. Reached by holding a thumb (tap =
 the small function):
 
-| hold | cap | tap |
+| hold | key | tap |
 |---|---|---|
-| Media | `Xor` (left, outer Miryoku thumb) | Esc |
-| Nav | `Pop` (left, middle) | Space |
-| Mouse | `Xchg` (left, inner wide) | Tab |
-| Sym | `Lshf` (right, inner wide) | Enter |
-| Num | `Pop` (right, middle) | Backspace |
-| Fun | `Xor` (right, outer) | Delete |
-| Button | `Z` (left) and `/` (right) — the bottom-row corner keys | those keys' output |
+| Media | `L27` (left, outer Miryoku thumb) | Esc |
+| Nav | `L26` (left, middle) | Space |
+| Mouse | `L25` (left, inner, 1.5u) | Tab |
+| Sym | `R25` (right, inner, 1.5u) | Enter |
+| Num | `R26` (right, middle) | Backspace |
+| Fun | `R27` (right, outer) | Delete |
+| Button | `L23` and `R23` — in the bottom row, one key in from the outer column | that key's output |
 
 Layer contents, options and Miryoku's own diagrams are in
 `users/manna-harbour_miryoku/readme.org`.
@@ -152,22 +154,21 @@ Layer contents, options and Miryoku's own diagrams are in
 All of them live in `LAYOUT_miryoku` in the keymap's `config.h` and behave the
 same on **every** layer, so the numbers stay put while a layer is held.
 
-| key (cap) | sends | notes |
-|---|---|---|
-| `Cmp`, left column top | `KC_EQL` | `´`, `Shift` = `` ` `` |
-| `Hcf`, left column | `KC_NUHS` | `#`, `Shift` = `'` |
-| `Mul`, left column | `KC_MINS` | `ß`, `Shift` = `?` |
-| `And`, left column bottom | `KC_NUBS` | `<`, `Shift` = `>` |
-| `1`–`4` in the left number row | `LGUI` + `Q`/`R`/`E`/`F` | kitty, wofi, dolphin, fullscreen |
-| `5` in the left number row | `LGUI` + `Shift` + `Q` | close window |
-| `6` (right number row, innermost) | `LAlt` + `Space` | tmux special workspace |
-| `7` `8` `9` `0` (right number row) | media | prev track, play/pause, next track, mute |
-| `Ret`, `Sub` (right outer column) | `KC_LBRC` / `KC_QUOT` | `ü`, `ä` |
-| `Add` (outermost left thumb) | `RM_TOGG` | RGB Matrix on/off |
-| `Mav` (left thumb, next one in) | `RM_PREV` | previous RGB effect |
-| `?` (bottom-right outer key) | `RM_NEXT` | next RGB effect (cycles eleven modes) |
-| `Lea` (outermost right number row) | `RM_HUEU` | hue, wraps |
-| `Mav`, `And` (the two outer right thumbs) | `RM_VALD`, `RM_VALU` | dimmer / brighter; also dims the blue accents |
+| key | position | sends | notes |
+|---|---|---|---|
+| `L6` | left column, number row | `KC_EQL` | `´`, `Shift` = `` ` `` |
+| `L12` | left column, Q row | `KC_NUHS` | `#`, `Shift` = `'` |
+| `L18` | left column, A row | `KC_MINS` | `ß`, `Shift` = `?` |
+| `L24` | left column, Z row | `KC_NUBS` | `<`, `Shift` = `>` |
+| `L1`–`L5` | left number row | `LGUI` + `Q`/`R`/`E`/`F`, `LGUI`+`Shift`+`Q` | kitty, wofi, dolphin, fullscreen, close window |
+| `R1` | right number row, inner | `LAlt` + `Space` | tmux special workspace |
+| `R2`–`R5` | right number row | media | prev track, play/pause, next track, mute |
+| `R12`, `R18` | right column, Q + A rows | `KC_LBRC` / `KC_QUOT` | `ü`, `ä` |
+| `L29` | outermost left thumb | `RM_TOGG` | RGB Matrix on/off |
+| `L28` | left thumb, next one in | `RM_PREV` | previous RGB effect |
+| `R24` | bottom-right outer key | `RM_NEXT` | next RGB effect (cycles eleven modes) |
+| `R6` | outermost right number row | `RM_HUEU` | hue, wraps |
+| `R29`, `R28` | the two outer right thumbs | `RM_VALU`, `RM_VALD` | brighter / dimmer; also dims the blue accents |
 
 The `ö` cell is Miryoku's own (substituted in `custom_config.h`), and `ß` also
 stays where Miryoku keeps it, on the Num layer. The four spare cells Miryoku
@@ -189,15 +190,10 @@ Firmware size is **28614/28672 bytes** (58 B free) and RAM 2036/2560. Adding an
 effect costs 26–290 B depending on what code it shares, so measure first —
 `~/effect-costs.txt` has every candidate's measured cost.
 
-### Caps, alphas, options
+### Alphas and options
 
-The caps are a Colemak-DH-ish set, and the outer columns carry assembly-flavoured
-mnemonics (`Cmp`, `Hcf`, `Mul`, `And`, `Add`, `Mav`, `Xor`, `Pop`, `Xchg`, `Lea`,
-`Ret`, `Sub`, `Lshf`) with a few coloured corner accents. They therefore disagree
-with the firmware: the key that types `e` wears the cap `F`, the one that types
-`r` wears `P`, `z` wears `Y`, `u` wears `L`, and so on. The schematic above is the
-reference; the grey line under each key is exactly what to re-check if the board
-is ever re-capped.
+The schematic and every table here identify keys by **number**, never by cap
+legend, so whatever is on the board stays consistent with this document.
 
 Alphas are **QWERTY** by default (`MIRYOKU_ALPHAS = QWERTY` in the keymap's
 `rules.mk`, so local builds and CI agree). That is deliberate even for a German
