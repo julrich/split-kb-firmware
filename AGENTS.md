@@ -93,25 +93,44 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 
 | feature | implementation |
 |---|---|
-| Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout, but with the **corrected** cell→LED table in `led_table.h` — the keyboard's own table is wrong, see §6. Default mode `RGB_MATRIX_SOLID_REACTIVE_SIMPLE`: the key you press pulses. Nothing is painted statically except the two knob LEDs (indices 0 / 36) at low brightness — the reactive effect is the only animation enabled |
-| Pulse feel | `keyboard_post_init_user()` forces the mode, `val` 200 and `speed` 32 (≈2 s fade) on both halves so an EEPROM reset cannot change it; `RGB_MATRIX_MAXIMUM_BRIGHTNESS` is raised to 200 to allow that value |
+| Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout, but with the **corrected** cell→LED table in `led_table.h` — the keyboard's own table is wrong, see §6. Ten effects are enabled (see the effects section); the default `SOLID_REACTIVE_SIMPLE` makes each pressed key pulse, and the static accents are painted in `keymap.c` |
+| Pulse feel | Nothing is forced at boot: mode, hue, brightness and speed live in EEPROM, so `RM_NEXT`/`RM_PREV`/`RM_HUEU`/`RM_VALU`/`RM_VALD` choices survive a reboot. `RGB_MATRIX_MAXIMUM_BRIGHTNESS` 200 and `RGB_MATRIX_DEFAULT_SPD` 32 (≈2 s fade) are what a *fresh* EEPROM gets — see the effects section |
 | OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, the compiled alphas (`Qwrtz` by default, see `rules.mk`), active layer name |
 | OLED (slave) | `render_logo()`, 128x32 bitmap, default rotation |
 | Encoders | `encoder_update_user()`: index 0 = volume; index 1 per layer — `KC_PGUP`/`KC_PGDN` on Base/Extra/Tap, `KC_UP`/`KC_DOWN` on Nav, `MS_WHLU`/`MS_WHLD` on the other six. Clockwise is the negative direction everywhere. Index 1 **must** return `false` — see the trap in §6 |
 
 ### Effects: what is compiled, what exists, how to switch
 
-**Compiled in right now: two.** The mode enum only contains effects that are both
-implemented in QMK *and* enabled by a `#define`:
+**Compiled in right now: ten.** The mode enum only contains effects that are both
+implemented in QMK *and* enabled by a `#define`, so `RM_NEXT`/`RM_PREV` cycle
+exactly these (plus `SOLID_COLOR`, which QMK always compiles):
 
-| mode | effect | how it looks |
+| mode | effect | look |
 |---|---|---|
-| 1 | `SOLID_COLOR` | always compiled (unguarded in QMK): every LED in one stored colour, static |
-| 2 | `SOLID_REACTIVE_SIMPLE` | the one this keymap enables: the accents stay, and the LED under each key you press flashes and fades |
+| 1 | `SOLID_COLOR` | always compiled (unguarded): every LED one colour, static |
+| 2 | `SOLID_REACTIVE_SIMPLE` | the default: accents stay, pressed keys flash and fade |
+| 3 | `SOLID_REACTIVE` | everything lit, each press punches a fading hole |
+| 4 | `SOLID_REACTIVE_WIDE` | a wide glow radiates from each press |
+| 5 | `SOLID_REACTIVE_MULTIWIDE` | several wide glows at once |
+| 6 | `SPLASH` | a splash spreads out from each press |
+| 7 | `SOLID_SPLASH` | the same on the fully lit variant |
+| 8 | `MULTISPLASH` | several splashes at once |
+| 9 | `SOLID_MULTISPLASH` | and on the fully lit variant |
+| 10 | `CYCLE_LEFT_RIGHT` | a rainbow band moving across the columns |
 
-`RM_NEXT` steps the mode and wraps to **1** (`rgb_matrix.c`), so with two effects
-enabled it is a **two-way toggle**; mode 0 (`RGB_MATRIX_NONE`, all off) cannot be
-reached from a key.
+Mode 0 (`RGB_MATRIX_NONE`, all off) cannot be reached from a key — the step
+function wraps to 1.
+
+`CYCLE_LEFT_RIGHT` is the only non-keypress effect in the set; it is there because
+the *splash* family was already paid for and 28 bytes were left. Measured marginal
+costs for everything tried are in `~/effect-costs.txt` (2026-10-05, incremental
+builds): the splash runner itself costs **462 B** (`SOLID_REACTIVE_WIDE`) and then
+unlocks `SPLASH` (+60), `SOLID_SPLASH` (+58), `MULTISPLASH` (+10),
+`SOLID_MULTISPLASH` (+8), `SOLID_REACTIVE_MULTIWIDE` (+8); the `MULTI*` variants of
+the other runners are 8 B each, `SOLID_REACTIVE` ≈ 100 B, `NEXUS` +116 B, and the
+classics run 26–290 B (`CYCLE_LEFT_RIGHT` 28, `BREATHING` 90, `GRADIENT_*` 112/118,
+`STARLIGHT` 236, `RAINDROPS` 290). The framebuffer pair would also cost 216 B of
+RAM, which is why they are not in.
 
 **Available: 47 animations** in this pinned QMK, in three groups:
 
@@ -134,22 +153,31 @@ RGBLIGHT, by contrast, has only 10 strip-wide effects and **no** keypress
 reactivity — which is why the lighting moved off it (commit `aa0d718` is the
 RGBLIGHT version; revert it to go back).
 
-**Adding one** is one line in `config.h`: `#define ENABLE_RGB_MATRIX_<NAME>`
-(e.g. `ENABLE_RGB_MATRIX_SPLASH`), plus `RGB_MATRIX_KEYPRESSES` or
-`RGB_MATRIX_FRAMEBUFFER_EFFECTS` when its group needs it, then build and flash.
-Budget ~100–400 B of flash each (806 B free at the last build). Non-keypress
-effects also need brightness/colour of their own: they use the stored
-`hsv`/`speed`, which `keyboard_post_init_user()` forces to 200 / 32.
+**Adding one** is one line in `config.h`: `#define ENABLE_RGB_MATRIX_<NAME>`, plus
+`RGB_MATRIX_KEYPRESSES` or `RGB_MATRIX_FRAMEBUFFER_EFFECTS` when its group needs
+it, then build and flash — the size check fails the build when it no longer fits
+(58 B free at the last build, so measure first; the framebuffer pair also costs
+216 B of RAM). See the comment block above the `#define`s in `config.h` for the
+cost of each effect in the current set.
 
-**Choosing at runtime**: two RGB keys are mapped — `RM_TOGG` (outermost left
-thumb) and `RM_NEXT` (bottom-right outer key). The mode lives in EEPROM and is
-*not* re-forced at boot, so an `RM_NEXT` choice survives a reboot; a fresh EEPROM
-starts in `RGB_MATRIX_DEFAULT_MODE` from `config.h`. `RM_PREV`, `RM_HUEU/HUED`,
-`RM_SATU/SATD`, `RM_VALU/VALD`, `RM_SPDU/SPDD` exist but are unmapped — the four
-spare cells that could take them are the right half's outermost number-row key,
-the left thumb next to `RM_TOGG`, and the two outer right thumbs (§3). The knob
-push-button cells `[4,5]`/`[9,5]` are *not* pressable on this board, so no RGB key
-fits there.
+**Choosing at runtime** — six RGB keys are mapped:
+
+| key | cell | does |
+|---|---|---|
+| outermost left thumb | `[4,0]` | `RM_TOGG` — strip on/off |
+| left thumb next to it | `[4,1]` | `RM_PREV` — previous effect |
+| bottom-right outer key | `[8,0]` | `RM_NEXT` — next effect (cycles the ten above) |
+| right number row, outermost | `[5,0]` | `RM_HUEU` — hue, wraps around |
+| right outermost thumb | `[9,0]` | `RM_VALU` — brighter |
+| right thumb next to it | `[9,1]` | `RM_VALD` — dimmer |
+
+Mode, hue, brightness and speed all live in EEPROM and **nothing is forced at
+boot** any more, so every choice survives a reboot; the accents and the knob LEDs
+follow the stored brightness (`ACCENT_BRIGHTNESS`/`INDICATOR_BRIGHTNESS` in
+`keymap.c`, scaled by it), so the brightness keys dim the whole strip. To get the
+compiled defaults back — and the only way to get `DEFAULT_SPD` 32 onto a board
+whose EEPROM predates it — wipe the EEPROM per half: hold that half's
+outermost-top key while plugging it in (§5).
 
 ### The 24 cells beyond Miryoku's 36
 
@@ -166,8 +194,15 @@ should not vanish while a layer is held. 54 of the 60 cells carry something.
 | left column, Q/A/Z rows | `KC_NUHS` `KC_MINS` `KC_NUBS` | `#`/`'`, `ß`/`?`, `<`/`>` |
 | right column, Q + A rows | `KC_LBRC` `KC_QUOT` | `ü`, `ä` (Miryoku's own cells; `custom_config.h` turns the cell one key inward into `ö`) |
 | outermost left thumb | `RM_TOGG` | RGB Matrix on/off |
-| bottom-right outer key (below `ä`) | `RM_NEXT` | next RGB effect |
-| six spares | `KC_NO` | right number-row rightmost, left thumb next to `RM_TOGG`, the two right outer thumbs, and the Sofle's two knob push-button cells (`matrix [4,5]`/`[9,5]`, `x=6`/`9.5` in `rev1/keyboard.json`) — those two cells exist in the keyboard but this board's knobs are not wired to the matrix, so nothing can press them |
+| left thumb next to it | `RM_PREV` | previous RGB effect |
+| bottom-right outer key (below `ä`) | `RM_NEXT` | next RGB effect (cycles ten) |
+| right number row, outermost | `RM_HUEU` | hue, wraps |
+| right outer thumbs (`x=14`, `x=13`) | `RM_VALU`, `RM_VALD` | brighter / dimmer |
+| two spares | `KC_NO` | the Sofle's two knob push-button cells (`matrix [4,5]`/`[9,5]`, `x=6`/`9.5` in `rev1/keyboard.json`) — they exist in the keyboard but this board's knobs are not wired to the matrix, so nothing can press them |
+
+That exhausts the free cells: the four pressable spares now carry `RM_PREV`,
+`RM_HUEU`, `RM_VALU` and `RM_VALD`. See the effects section above for what the
+RGB keys do and how to change the set.
 
 `RM_*`, not `UG_*`: `UG_*` are RGBLIGHT keycodes and this build is RGB Matrix
 only, so Miryoku's Media-layer `UG_*` keys (which are still in that layer) do
@@ -190,9 +225,10 @@ Three deliberate cleanups vs. the old fork:
 
 ## 4. Not here (yet): what the old `julrich` keymap had
 
-Miryoku maps **36 of the Sofle's 60 keys**; the other 24 are listed in §3 above
-(six of them are spare). Numbers live on Miryoku's Num layer. Whatever free keys
-remain are where anything below would go.
+Miryoku maps **36 of the Sofle's 60 keys**; the other 24 are listed in §3 above,
+and all but the two unwired knob push-button cells now carry something. Numbers
+live on Miryoku's Num layer. Whatever free cells remain are where anything below
+would go.
 
 | julrich capability | old implementation | now |
 |---|---|---|

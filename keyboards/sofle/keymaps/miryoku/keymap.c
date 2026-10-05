@@ -32,21 +32,21 @@
 
 #ifdef RGB_MATRIX_ENABLE
 
-// ---------------------------------------------------------------- MODE/FEEL --
-// The *mode* is deliberately not touched here: it lives in EEPROM, so whatever
-// `RM_NEXT` selects survives a reboot, and a fresh EEPROM gets the compiled
-// default (RGB_MATRIX_DEFAULT_MODE in config.h). Brightness and fade length *are*
-// forced, because this keymap maps no keys for them and the intended feel should
-// survive an EEPROM reset: full brightness (cap 200 in config.h) and `speed` 32
-// (~2 s to black; the default 127 is ~0.5 s).
-void keyboard_post_init_user(void) {
-    rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 200);
-    rgb_matrix_set_speed_noeeprom(32);
-}
-
+// ---------------------------------------------------------------- ACCENTS --
+// The mode and the brightness/colour/speed live in EEPROM - nothing is forced at
+// boot, so `RM_NEXT`/`RM_PREV`/`RM_HUEU`/`RM_VALU`/`RM_VALD` choices survive a
+// reboot. A fresh EEPROM gets `RGB_MATRIX_DEFAULT_MODE` and the cap/`DEFAULT_SPD`
+// from config.h.
+//
+// The accent and knob-LED brightness are *relative* to the stored value, so the
+// brightness keys dim the whole strip, accents included.
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    // scale8() lives in lib8tion, which the keymap translation unit does not pull
+    // in; `x * val >> 8` is exactly what it does.
+    const uint8_t val = rgb_matrix_get_val();
+
     hsv_t accent_hsv = {HSV_BLUE};
-    accent_hsv.v     = ACCENT_BRIGHTNESS;
+    accent_hsv.v     = (uint8_t)(((uint16_t)ACCENT_BRIGHTNESS * val) >> 8);
     rgb_t accent     = hsv_to_rgb(accent_hsv);
 
     // A hit ages out of the effect after 65535/(speed+1) ms, so only leave the
@@ -72,7 +72,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     }
 
     hsv_t indicator_hsv = {HSV_BLUE};
-    indicator_hsv.v     = INDICATOR_BRIGHTNESS;
+    indicator_hsv.v     = (uint8_t)(((uint16_t)INDICATOR_BRIGHTNESS * val) >> 8);
     rgb_t indicator     = hsv_to_rgb(indicator_hsv);
     if (0 >= led_min && 0 < led_max) {
         rgb_matrix_set_color(0, indicator.r, indicator.g, indicator.b);
