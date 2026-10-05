@@ -1,0 +1,82 @@
+RGB Matrix effect cost measurements - Sofle rev1 keymap, 2026-10-05
+==================================================================
+
+Method: starting from the then-current config.h (27852/28672, only
+SOLID_REACTIVE_SIMPLE enabled), each effect below was added in turn and a full
+`qmk compile` run, recording the resulting size. "delta" is the marginal cost of
+that effect on top of everything listed before it - i.e. it includes the effect's
+own code only where the linker did not already have it.
+
+Caveat: the deltas are NOT additive. Effects share runner/math code, so an effect
+added later can be much cheaper (MULTI* variants: 8 B) than the first one that
+pulls in the runner (SOLID_REACTIVE_WIDE: 462 B, which pays for the splash
+runner). Moving an effect earlier in the list, or enabling a variant without the
+effect that provided the runner, changes the numbers.
+
+  effect                           size    delta
+  SOLID_REACTIVE                  27852        0    <- NOTE: measurement bug; the
+                                                       name is a substring of
+                                                       ..._SIMPLE so the define
+                                                       was not added. True cost
+                                                       is ~100 B (in the final
+                                                       set the whole build is
+                                                       28614 with it enabled).
+  SOLID_REACTIVE_WIDE             28314      462
+  SOLID_REACTIVE_CROSS            28530      216
+  SOLID_REACTIVE_NEXUS            28646      116
+  SPLASH                          28706       60
+  SOLID_SPLASH                    28764       58
+  MULTISPLASH                     28774       10
+  SOLID_REACTIVE_MULTIWIDE        28782        8
+  SOLID_REACTIVE_MULTICROSS       28790        8
+  SOLID_REACTIVE_MULTINEXUS       28798        8
+  SOLID_MULTISPLASH               28806        8
+  BREATHING                       28896       90
+  CYCLE_ALL                       28942       46
+  CYCLE_LEFT_RIGHT                28970       28
+  CYCLE_UP_DOWN                   28996       26
+  CYCLE_OUT_IN                    29162      166
+  CYCLE_OUT_IN_DUAL               29360      198
+  CYCLE_PINWHEEL                  29520      160
+  CYCLE_SPIRAL                    29680      160
+  GRADIENT_UP_DOWN                29792      112
+  GRADIENT_LEFT_RIGHT             29910      118
+  RAINBOW_MOVING_CHEVRON          29970       60
+  RAINBOW_BEACON                  30186      216
+  RAINBOW_PINWHEELS               30350      164
+  DUAL_BEACON                     30444       94
+  HUE_BREATHING                   30496       52
+  HUE_PENDULUM                    30568       72
+  HUE_WAVE                        30626       58
+  RAINDROPS                       30916      290
+  JELLYBEAN_RAINDROPS             31104      188
+  STARLIGHT                       31340      236
+  STARLIGHT_SMOOTH                31552      212
+  STARLIGHT_DUAL_HUE              31814      262
+  STARLIGHT_DUAL_SAT              32014      200
+  RIVERFLOW                       32094       80
+  FLOWER_BLOOMING                 32284      190
+  ALPHAS_MODS                     32406      122
+  BAND_SAT                        32518      112
+  BAND_VAL                        32628      110
+  BAND_PINWHEEL_SAT               32694       66
+  BAND_PINWHEEL_VAL               32756       62
+  BAND_SPIRAL_SAT                 (measurement stopped: already far over)
+
+Every size above 28672 is a build that failed the size check and would have to be
+trimmed; the measurement continued past the limit only because the loop kept
+adding effects and the size check does not stop the compile from producing a
+number.
+
+Not measured: SOLID_COLOR (always compiled), the two framebuffer effects
+(TYPING_HEATMAP, DIGITAL_RAIN) - they additionally need
+RGB_MATRIX_FRAMEBUFFER_EFFECTS, i.e. 216 B of the ATmega32u4's 2560 B RAM, which
+is why they are excluded from this keymap.
+
+Final enabled set (28614/28672, 58 B free):
+  SOLID_REACTIVE_SIMPLE (default), SOLID_REACTIVE, SOLID_REACTIVE_WIDE,
+  SOLID_REACTIVE_MULTIWIDE, SPLASH, SOLID_SPLASH, MULTISPLASH,
+  SOLID_MULTISPLASH, CYCLE_LEFT_RIGHT
+
+Combining them again gave 28676 (4 B over) with CYCLE_UP_DOWN added, so that one
+was dropped: the deltas above really are order-dependent.

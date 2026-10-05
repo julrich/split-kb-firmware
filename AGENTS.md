@@ -15,7 +15,9 @@ keyboards/sofle/keymaps/miryoku/       Sofle keymap (this is where our code live
 users/manna-harbour_miryoku/           vendored Miryoku user space (layers)
 qmk.json                               build targets for `qmk userspace-compile` / CI
 Makefile                               forwards `make <kb>:<km>` to the submodule
-docs/sofle-layout.{svg,png}            generated layout schematic + cap legend (see README)
+docs/sofle-layout.{svg,png}            generated layout schematic + key numbers (see README)
+tools/gen_layout_svg.py                regenerates the schematic
+tools/gen_led_table.py                 regenerates the keymap's led_table.h
 ```
 
 ## 1. Pins — update deliberately
@@ -123,7 +125,7 @@ function wraps to 1.
 
 `CYCLE_LEFT_RIGHT` is the only non-keypress effect in the set; it is there because
 the *splash* family was already paid for and 28 bytes were left. Measured marginal
-costs for everything tried are in `~/effect-costs.txt` (2026-10-05, incremental
+costs for everything tried are in `docs/effect-costs.txt` (2026-10-05, incremental
 builds): the splash runner itself costs **462 B** (`SOLID_REACTIVE_WIDE`) and then
 unlocks `SPLASH` (+60), `SOLID_SPLASH` (+58), `MULTISPLASH` (+10),
 `SOLID_MULTISPLASH` (+8), `SOLID_REACTIVE_MULTIWIDE` (+8); the `MULTI*` variants of
@@ -419,8 +421,8 @@ with `lsusb`: 77798 bytes (local `avr-gcc`) and `-DMIRYOKU_ALPHAS_QWERTY` in
   Measured 2026-10-05 by walking all 36 LED indices per half with a temporary build
   that lit one index at a time and printed it on that half's OLED; every index was
   then identified by pressing the key under the lit LED. The raw capture and the
-  decoder are kept outside the repo in `~/walk-left-capture.txt` and
-  `~/decode_walk.py`; the generator for the table is `~/gen_led_table.py`.
+  decoder are kept outside the repo in `docs/led-walk-left-half.txt` and
+  `tools/decode_walk.py`; the generator for the table is `tools/gen_led_table.py`.
   Result: indices 0-5 of each half are the six off-grid LEDs (underglow + the knob
   LED), then the 29 key LEDs follow the route in `led_table.h`, and the last LED of
   the half is off-grid again (so 0 and 36 — the json's `flags: 8` indicators — are

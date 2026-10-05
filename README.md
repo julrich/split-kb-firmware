@@ -126,7 +126,7 @@ numbers, so any cap legends on the board are irrelevant to them.
 Regenerate after a keymap change with:
 
 ```sh
-python3 ~/gen_layout_svg.py docs/sofle-layout.svg
+python3 tools/gen_layout_svg.py docs/sofle-layout.svg
 rsvg-convert -z 1.6 docs/sofle-layout.svg -o docs/sofle-layout.png
 ```
 
@@ -188,7 +188,7 @@ the two knob push-buttons, which this board does not wire to the matrix.
 
 Firmware size is **28614/28672 bytes** (58 B free) and RAM 2036/2560. Adding an
 effect costs 26–290 B depending on what code it shares, so measure first —
-`~/effect-costs.txt` has every candidate's measured cost.
+`docs/effect-costs.txt` has every candidate's measured cost.
 
 ### Alphas and options
 
