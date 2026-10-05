@@ -101,9 +101,8 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 
 ### Effects: what is compiled, what exists, how to switch
 
-**Compiled in right now: ten.** The mode enum only contains effects that are both
-implemented in QMK *and* enabled by a `#define`, so `RM_NEXT`/`RM_PREV` cycle
-exactly these (plus `SOLID_COLOR`, which QMK always compiles):
+**Compiled in right now: eleven modes** — `SOLID_COLOR` (always compiled, mode 1)
+plus ten enabled effects. `RM_NEXT`/`RM_PREV` cycle exactly these:
 
 | mode | effect | look |
 |---|---|---|
@@ -166,7 +165,7 @@ cost of each effect in the current set.
 |---|---|---|
 | outermost left thumb | `[4,0]` | `RM_TOGG` — strip on/off |
 | left thumb next to it | `[4,1]` | `RM_PREV` — previous effect |
-| bottom-right outer key | `[8,0]` | `RM_NEXT` — next effect (cycles the ten above) |
+| bottom-right outer key | `[8,0]` | `RM_NEXT` — next effect (cycles the eleven modes above) |
 | right number row, outermost | `[5,0]` | `RM_HUEU` — hue, wraps around |
 | right outermost thumb | `[9,0]` | `RM_VALU` — brighter |
 | right thumb next to it | `[9,1]` | `RM_VALD` — dimmer |
