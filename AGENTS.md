@@ -15,6 +15,7 @@ keyboards/sofle/keymaps/miryoku/       Sofle keymap (this is where our code live
 users/manna-harbour_miryoku/           vendored Miryoku user space (layers)
 qmk.json                               build targets for `qmk userspace-compile` / CI
 Makefile                               forwards `make <kb>:<km>` to the submodule
+docs/sofle-layout.{svg,png}            generated layout schematic + cap legend (see README)
 ```
 
 ## 1. Pins — update deliberately
@@ -373,7 +374,8 @@ with `lsusb`: 77798 bytes (local `avr-gcc`) and `-DMIRYOKU_ALPHAS_QWERTY` in
   name.
 - The 72 WS2812 LEDs (36/side) are driven by **RGB Matrix**; `RGBLIGHT_ENABLE` is
   explicitly off. Enabling both does not fit: RGBLIGHT + RGB Matrix = 29636/28672
-  (**964 bytes over**). RGB Matrix alone = 27654, RGBLIGHT alone = 26890.
+  (**964 bytes over**; the old figures, RGB Matrix alone 27654 / RGBLIGHT alone 26890
+  were measured before the current effect set and static accents).
   If RGBLIGHT is ever re-enabled, `RGB_MATRIX_DRIVER = WS2812` no longer exists —
   the valid value is `ws2812`.
 - The old RGBLIGHT accent pattern addressed the right half as `35 + N`, which is
