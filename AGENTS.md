@@ -99,15 +99,57 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 | OLED (slave) | `render_logo()`, 128x32 bitmap, default rotation |
 | Encoders | `encoder_update_user()`: index 0 = volume; index 1 per layer — `KC_PGUP`/`KC_PGDN` on Base/Extra/Tap, `KC_UP`/`KC_DOWN` on Nav, `MS_WHLU`/`MS_WHLD` on the other six. Clockwise is the negative direction everywhere. Index 1 **must** return `false` — see the trap in §6 |
 
-Effects: RGB Matrix ships **47** animations. To add one, define its
-`ENABLE_RGB_MATRIX_*` plus, for the keypress-driven ones, `RGB_MATRIX_KEYPRESSES`
-(already set) in `config.h`; budget ~100–400 bytes each. Reactive family:
-`SOLID_REACTIVE_SIMPLE`, `SOLID_REACTIVE`, `SOLID_REACTIVE_WIDE`, `..._MULTIWIDE`,
-`..._CROSS`, `..._MULTICROSS`, `..._NEXUS`, `..._MULTINEXUS`, `SPLASH`,
-`MULTISPLASH`, `SOLID_SPLASH`, `SOLID_MULTISPLASH`. RGBLIGHT, by contrast, has
-only 10 strip-wide effects and **no** keypress reactivity — which is why the
-lighting moved off it (commit `aa0d718` is the RGBLIGHT version; revert it to
-go back).
+### Effects: what is compiled, what exists, how to switch
+
+**Compiled in right now: two.** The mode enum only contains effects that are both
+implemented in QMK *and* enabled by a `#define`:
+
+| mode | effect | how it looks |
+|---|---|---|
+| 1 | `SOLID_COLOR` | always compiled (unguarded in QMK): every LED in one stored colour, static |
+| 2 | `SOLID_REACTIVE_SIMPLE` | the one this keymap enables: the accents stay, and the LED under each key you press flashes and fades |
+
+`RM_NEXT` steps the mode and wraps to **1** (`rgb_matrix.c`), so with two effects
+enabled it is a **two-way toggle**; mode 0 (`RGB_MATRIX_NONE`, all off) cannot be
+reached from a key.
+
+**Available: 47 animations** in this pinned QMK, in three groups:
+
+- **keypress-driven (12)** — need `RGB_MATRIX_KEYPRESSES` (already set):
+  `SOLID_REACTIVE_SIMPLE`, `SOLID_REACTIVE`, `..._WIDE`, `..._MULTIWIDE`,
+  `..._CROSS`, `..._MULTICROSS`, `..._NEXUS`, `..._MULTINEXUS`, `SPLASH`,
+  `SOLID_SPLASH`, `MULTISPLASH`, `SOLID_MULTISPLASH`
+- **framebuffer (2)** — need `RGB_MATRIX_FRAMEBUFFER_EFFECTS`, which costs 216 B
+  of the ATmega32u4's 2560 B of RAM: `TYPING_HEATMAP`, `DIGITAL_RAIN`
+- **position/time-driven (32)**: `ALPHAS_MODS`, `BREATHING`, `BAND_SAT`,
+  `BAND_VAL`, `BAND_PINWHEEL_SAT/VAL`, `BAND_SPIRAL_SAT/VAL`, `CYCLE_ALL`,
+  `CYCLE_LEFT_RIGHT`, `CYCLE_UP_DOWN`, `CYCLE_OUT_IN`, `CYCLE_OUT_IN_DUAL`,
+  `CYCLE_PINWHEEL`, `CYCLE_SPIRAL`, `DUAL_BEACON`, `FLOWER_BLOOMING`,
+  `GRADIENT_UP_DOWN`, `GRADIENT_LEFT_RIGHT`, `HUE_BREATHING`, `HUE_PENDULUM`,
+  `HUE_WAVE`, `JELLYBEAN_RAINDROPS`, `RAINBOW_BEACON`,
+  `RAINBOW_MOVING_CHEVRON`, `RAINBOW_PINWHEELS`, `RAINDROPS`, `RIVERFLOW`,
+  `STARLIGHT`, `STARLIGHT_DUAL_HUE`, `STARLIGHT_DUAL_SAT`, `STARLIGHT_SMOOTH`
+
+RGBLIGHT, by contrast, has only 10 strip-wide effects and **no** keypress
+reactivity — which is why the lighting moved off it (commit `aa0d718` is the
+RGBLIGHT version; revert it to go back).
+
+**Adding one** is one line in `config.h`: `#define ENABLE_RGB_MATRIX_<NAME>`
+(e.g. `ENABLE_RGB_MATRIX_SPLASH`), plus `RGB_MATRIX_KEYPRESSES` or
+`RGB_MATRIX_FRAMEBUFFER_EFFECTS` when its group needs it, then build and flash.
+Budget ~100–400 B of flash each (806 B free at the last build). Non-keypress
+effects also need brightness/colour of their own: they use the stored
+`hsv`/`speed`, which `keyboard_post_init_user()` forces to 200 / 32.
+
+**Choosing at runtime**: two RGB keys are mapped — `RM_TOGG` (outermost left
+thumb) and `RM_NEXT` (bottom-right outer key). The mode lives in EEPROM and is
+*not* re-forced at boot, so an `RM_NEXT` choice survives a reboot; a fresh EEPROM
+starts in `RGB_MATRIX_DEFAULT_MODE` from `config.h`. `RM_PREV`, `RM_HUEU/HUED`,
+`RM_SATU/SATD`, `RM_VALU/VALD`, `RM_SPDU/SPDD` exist but are unmapped — the four
+spare cells that could take them are the right half's outermost number-row key,
+the left thumb next to `RM_TOGG`, and the two outer right thumbs (§3). The knob
+push-button cells `[4,5]`/`[9,5]` are *not* pressable on this board, so no RGB key
+fits there.
 
 ### The 24 cells beyond Miryoku's 36
 

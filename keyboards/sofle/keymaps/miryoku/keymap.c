@@ -33,11 +33,13 @@
 #ifdef RGB_MATRIX_ENABLE
 
 // ---------------------------------------------------------------- MODE/FEEL --
-// Forced rather than left to EEPROM so the intended feel survives an EEPROM reset:
-// full brightness (the cap in config.h is 200) and a long fade (`speed` 32 gives
-// ~2 s to black; the default 127 is ~0.5 s).
+// The *mode* is deliberately not touched here: it lives in EEPROM, so whatever
+// `RM_NEXT` selects survives a reboot, and a fresh EEPROM gets the compiled
+// default (RGB_MATRIX_DEFAULT_MODE in config.h). Brightness and fade length *are*
+// forced, because this keymap maps no keys for them and the intended feel should
+// survive an EEPROM reset: full brightness (cap 200 in config.h) and `speed` 32
+// (~2 s to black; the default 127 is ~0.5 s).
 void keyboard_post_init_user(void) {
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
     rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 200);
     rgb_matrix_set_speed_noeeprom(32);
 }
