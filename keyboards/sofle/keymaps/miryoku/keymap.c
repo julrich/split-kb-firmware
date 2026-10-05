@@ -10,44 +10,73 @@
 
 #include QMK_KEYBOARD_H
 #include "manna-harbour_miryoku.h"
+// Corrected matrix-cell -> LED-index table (see the file for why the keyboard's own
+// is wrong); defines the strong g_led_config that overrides the generated one.
+#include "led_table.h"
 
 // --------------------------------------------------------------------- RGB --
 
-// Sofle rev1 LED ids (indexes into the rgb_matrix layout in
-// keyboards/sofle/info.json): 0 and 36 are the indicator LEDs, 1-6 and 37-42
-// the underglow, the rest sit under keys. This is the set of LEDs the previous
-// RGBLIGHT lighting layer ended up lighting, kept identical so the look does
-// not change.
+// The static blue accent pattern (the off-grid ring, the outer column, the inner
+// column and the thumbs) is `led_accents[]` in led_table.h: it is generated from
+// the corrected LED table in that same file, so the pattern and the table cannot
+// disagree. The two knob LEDs (indices 0 and 36) are painted dim and are the only
+// permanent light; everything else waits for a keypress.
+//
+// An accented LED is skipped while the reactive effect has a hit on it, so a press
+// on any accented key - every thumb, both columns, the ring - still shows its pulse
+// on top of the accent. The old hand-written list could not: it came from the
+// RGBLIGHT keymap's `35 + N` indices, lit the wrong LEDs, and hid the pulses on the
+// keys it did cover.
+#define ACCENT_BRIGHTNESS 90
 #define INDICATOR_BRIGHTNESS 30
-
-static const uint8_t accent_leds[] = {
-    1,  2,  3,  4,  5,  6,        // left underglow
-    7,  8,  9,  10,               // left outer column
-    25, 26,                       // left thumb cluster
-    33, 34, 35,                   // left inner column
-    36, 37, 38, 39, 40, 41,       // right indicator + underglow
-    42, 43, 44, 45,               // right outer column
-    60, 61,                       // right thumb cluster
-    68, 69, 70, 71,               // right inner column
-};
 
 #ifdef RGB_MATRIX_ENABLE
 
+// ---------------------------------------------------------------- MODE/FEEL --
+// Forced rather than left to EEPROM so the intended feel survives an EEPROM reset:
+// full brightness (the cap in config.h is 200) and a long fade (`speed` 32 gives
+// ~2 s to black; the default 127 is ~0.5 s).
+void keyboard_post_init_user(void) {
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
+    rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 200);
+    rgb_matrix_set_speed_noeeprom(32);
+}
+
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     hsv_t accent_hsv = {HSV_BLUE};
+    accent_hsv.v     = ACCENT_BRIGHTNESS;
     rgb_t accent     = hsv_to_rgb(accent_hsv);
 
-    for (uint8_t i = 0; i < ARRAY_SIZE(accent_leds); i++) {
-        uint8_t led = accent_leds[i];
-        if (led >= led_min && led < led_max) {
+    // A hit ages out of the effect after 65535/(speed+1) ms, so only leave the
+    // accent off while the effect would still be drawing that LED.
+    uint16_t max_tick = 65535 / ((uint16_t)rgb_matrix_get_speed() + 1);
+
+    for (uint8_t i = 0; i < ARRAY_SIZE(led_accents); i++) {
+        uint8_t led = led_accents[i];
+        if (led < led_min || led >= led_max) {
+            continue;
+        }
+
+        bool pulsing = false;
+        for (int8_t j = g_last_hit_tracker.count - 1; j >= 0; j--) {
+            if (g_last_hit_tracker.index[j] == led) {
+                pulsing = g_last_hit_tracker.tick[j] < max_tick;
+                break;
+            }
+        }
+        if (!pulsing) {
             rgb_matrix_set_color(led, accent.r, accent.g, accent.b);
         }
     }
 
-    if (led_min == 0) {
-        hsv_t layer_id_hsv = {accent_hsv.h, accent_hsv.s, INDICATOR_BRIGHTNESS};
-        rgb_t layer_id     = hsv_to_rgb(layer_id_hsv);
-        rgb_matrix_set_color(0, layer_id.r, layer_id.g, layer_id.b);
+    hsv_t indicator_hsv = {HSV_BLUE};
+    indicator_hsv.v     = INDICATOR_BRIGHTNESS;
+    rgb_t indicator     = hsv_to_rgb(indicator_hsv);
+    if (0 >= led_min && 0 < led_max) {
+        rgb_matrix_set_color(0, indicator.r, indicator.g, indicator.b);
+    }
+    if (36 >= led_min && 36 < led_max) {
+        rgb_matrix_set_color(36, indicator.r, indicator.g, indicator.b);
     }
 
     return false;
@@ -157,14 +186,35 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         } else {
             tap_code(KC_VOLD);
         }
-    } else if (index == 1) {
-        if (clockwise) {
-            tap_code(MS_WHLD);
-        } else {
-            tap_code(MS_WHLU);
-        }
+        // Returns true on purpose: keyboards/sofle/sofle.c's encoder_update_kb
+        // then taps KC_VOLU/KC_VOLD once more, so one detent is two volume
+        // steps. That is what this encoder has always done -- return false for
+        // index 0 as well to halve it.
+        return true;
     }
-    return true;
+
+    // index == 1: per layer, and handled entirely here. Never fall through to
+    // the keyboard's encoder_update_kb -- its index 1 branch taps KC_PGUP/
+    // KC_PGDN unconditionally, which would page on top of every wheel or arrow
+    // step below. Clockwise keeps the negative direction (KC_PGDN, MS_WHLD)
+    // that the stock Sofle code uses.
+    switch (get_highest_layer(layer_state | default_layer_state)) {
+        case U_NAV:
+            tap_code(clockwise ? KC_DOWN : KC_UP);
+            break;
+        case U_NUM:
+        case U_SYM:
+        case U_FUN:
+        case U_MOUSE:
+        case U_MEDIA:
+        case U_BUTTON:
+            tap_code(clockwise ? MS_WHLD : MS_WHLU);
+            break;
+        default: // U_BASE, U_EXTRA, U_TAP
+            tap_code(clockwise ? KC_PGDN : KC_PGUP);
+            break;
+    }
+    return false;
 }
 
 #endif

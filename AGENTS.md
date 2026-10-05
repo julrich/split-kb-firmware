@@ -10,6 +10,7 @@ qmk_firmware/                          git submodule, pinned QMK commit
 keyboards/sofle/keymaps/miryoku/       Sofle keymap (this is where our code lives)
   config.h                             LAYOUT_miryoku mapping + RGB/LED config
   keymap.c                             hardware support: RGB, both OLEDs, encoders
+  led_table.h                          corrected matrix-cell -> LED-index table (see §6)
   rules.mk                             USER_NAME, drivers, bootloader
 users/manna-harbour_miryoku/           vendored Miryoku user space (layers)
 qmk.json                               build targets for `qmk userspace-compile` / CI
@@ -81,7 +82,7 @@ Optional one-off, if you no longer need to build the old fork and want plain
 qmk config user.qmk_home="$(realpath qmk_firmware)" user.overlay_dir="$(realpath .)"
 ```
 
-Current size: **27654 / 28672 bytes (96%, 1018 free)** on `atmega32u4`. That is
+Current size: **27670 / 28672 bytes (96%, 1002 free)** on `atmega32u4`. That is
 the binding constraint — check the number after every change, see §6.
 
 ## 3. What is in the keymap (and why)
@@ -92,10 +93,11 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 
 | feature | implementation |
 |---|---|
-| Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout (72 LEDs, 58 under keys, in `keyboards/sofle/info.json`). Default mode `RGB_MATRIX_SOLID_REACTIVE_SIMPLE` — the key you press pulses and fades. Static blue accents are drawn in `rgb_matrix_indicators_advanced_user()` from `accent_leds[]` |
+| Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout, but with the **corrected** cell→LED table in `led_table.h` — the keyboard's own table is wrong, see §6. Default mode `RGB_MATRIX_SOLID_REACTIVE_SIMPLE`: the key you press pulses. Nothing is painted statically except the two knob LEDs (indices 0 / 36) at low brightness — the reactive effect is the only animation enabled |
+| Pulse feel | `keyboard_post_init_user()` forces the mode, `val` 200 and `speed` 32 (≈2 s fade) on both halves so an EEPROM reset cannot change it; `RGB_MATRIX_MAXIMUM_BRIGHTNESS` is raised to 200 to allow that value |
 | OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, the compiled alphas (`Qwrtz` by default, see `rules.mk`), active layer name |
 | OLED (slave) | `render_logo()`, 128x32 bitmap, default rotation |
-| Encoders | `encoder_update_user()`: index 0 = volume, index 1 = `MS_WHLU`/`MS_WHLD` |
+| Encoders | `encoder_update_user()`: index 0 = volume; index 1 per layer — `KC_PGUP`/`KC_PGDN` on Base/Extra/Tap, `KC_UP`/`KC_DOWN` on Nav, `MS_WHLU`/`MS_WHLD` on the other six. Clockwise is the negative direction everywhere. Index 1 **must** return `false` — see the trap in §6 |
 
 Effects: RGB Matrix ships **47** animations. To add one, define its
 `ENABLE_RGB_MATRIX_*` plus, for the keypress-driven ones, `RGB_MATRIX_KEYPRESSES`
@@ -106,6 +108,28 @@ Effects: RGB Matrix ships **47** animations. To add one, define its
 only 10 strip-wide effects and **no** keypress reactivity — which is why the
 lighting moved off it (commit `aa0d718` is the RGBLIGHT version; revert it to
 go back).
+
+### The 24 cells beyond Miryoku's 36
+
+They all live in `LAYOUT_miryoku` in this keymap's `config.h`, so they behave the
+same on **every** layer (there is no per-layer override for them): a function row
+should not vanish while a layer is held. 54 of the 60 cells carry something.
+
+| physical key | keycode | what it does (German host) |
+|---|---|---|
+| number row, leftmost | `KC_EQL` | `´`, with `Shift` `` ` `` |
+| number row 1–5 | `LGUI(KC_Q/R/E/F)`, `LGUI(S(KC_Q))` | Hyprland (`$mainMod` = SUPER): kitty, wofi, dolphin, fullscreen, close window |
+| number row x=10.5 (right, innermost) | `LALT(KC_SPC)` | toggle the tmux special workspace |
+| number row 7–0 (right) | `KC_MPRV` `KC_MPLY` `KC_MNXT` `KC_MUTE` | media transport (`playerctl`) |
+| left column, Q/A/Z rows | `KC_NUHS` `KC_MINS` `KC_NUBS` | `#`/`'`, `ß`/`?`, `<`/`>` |
+| right column, Q + A rows | `KC_LBRC` `KC_QUOT` | `ü`, `ä` (Miryoku's own cells; `custom_config.h` turns the cell one key inward into `ö`) |
+| outermost left thumb | `RM_TOGG` | RGB Matrix on/off |
+| bottom-right outer key (below `ä`) | `RM_NEXT` | next RGB effect |
+| six spares | `KC_NO` | right number-row rightmost, left thumb next to `RM_TOGG`, the two right outer thumbs, and the Sofle's two knob push-button cells (`matrix [4,5]`/`[9,5]`, `x=6`/`9.5` in `rev1/keyboard.json`) — those two cells exist in the keyboard but this board's knobs are not wired to the matrix, so nothing can press them |
+
+`RM_*`, not `UG_*`: `UG_*` are RGBLIGHT keycodes and this build is RGB Matrix
+only, so Miryoku's Media-layer `UG_*` keys (which are still in that layer) do
+nothing.
 
 Three deliberate cleanups vs. the old fork:
 
@@ -124,12 +148,9 @@ Three deliberate cleanups vs. the old fork:
 
 ## 4. Not here (yet): what the old `julrich` keymap had
 
-Miryoku maps **36 of the Sofle's 60 keys**. Still unused: the whole number row
-(12 keys), the four outermost keys of the left hand, the two encoder-adjacent
-keys, and the four outer thumb keys. (The right hand's outermost column is no
-longer unused — its top and home keys now carry `ü` and `ä`, see §6.) Numbers
-live on Miryoku's Num layer. Whatever free keys remain are where anything below
-would go.
+Miryoku maps **36 of the Sofle's 60 keys**; the other 24 are listed in §3 above
+(six of them are spare). Numbers live on Miryoku's Num layer. Whatever free keys
+remain are where anything below would go.
 
 | julrich capability | old implementation | now |
 |---|---|---|
@@ -144,7 +165,7 @@ would go.
 | Layer jumps | `_SWITCH` overlay with `TO(0)`…`TO(6)` | absent |
 | Per-layer RGB colours | 7 RGBLIGHT lighting layers (red/pink/teal/blue/purple/orange/green) | replaced by the static blue accents + reactive pulse |
 | OLED brand line | `Dane Evans` + default-layer name | replaced by `TSNM` + compiled alphas + live layer |
-| Encoder 1 per layer | PGUP/PGDN on base, UP/DOWN on lower/raise, wheel elsewhere | wheel only (unchanged from the old Sofle-Miryoku keymap) |
+| Encoder 1 per layer | PGUP/PGDN on base, UP/DOWN on lower/raise, wheel elsewhere | layer-aware again: pages / lines (Nav) / wheel, see §3 |
 
 Carried over from `julrich`: `MASTER_LEFT`, `ENCODER_DIRECTION_FLIP`,
 `USB_MAX_POWER_CONSUMPTION 100`, the RGB brightness cap, tap-hold behaviour
@@ -310,10 +331,42 @@ with `lsusb`: 77798 bytes (local `avr-gcc`) and `-DMIRYOKU_ALPHAS_QWERTY` in
   `keymap_german.h` (which brings in `keycodes.h`) fails with
   `Error: junk at end of line` from the assembler. Use the raw keycodes and
   document the intent, or include the header in a `.c` file.
+- **The keyboard's LED table is wrong — do not trust `keyboard.json` for LED order.**
+  `keyboards/sofle/rev1/keyboard.json` + `sofle/info.json` claim each half's
+  per-key LEDs follow a column serpentine; on this board they do not. Symptom:
+  pressing a key lit another key's LED (the wide left thumb lit `Y`, the wide right
+  thumb lit the key below/right of `L`, others lit LEDs under the case), and the
+  old static accent list looked asymmetric because of it.
+  Measured 2026-10-05 by walking all 36 LED indices per half with a temporary build
+  that lit one index at a time and printed it on that half's OLED; every index was
+  then identified by pressing the key under the lit LED. The raw capture and the
+  decoder are kept outside the repo in `~/walk-left-capture.txt` and
+  `~/decode_walk.py`; the generator for the table is `~/gen_led_table.py`.
+  Result: indices 0-5 of each half are the six off-grid LEDs (underglow + the knob
+  LED), then the 29 key LEDs follow the route in `led_table.h`, and the last LED of
+  the half is off-grid again (so 0 and 36 — the json's `flags: 8` indicators — are
+  the knob LEDs, which is why exactly those two are painted dimly).
+  `led_table.h` defines a strong `g_led_config` that overrides the generated (weak)
+  one, correcting only `matrix_co`; **re-measure if the keyboard definition or the
+  pin assignment changes.**
 - A German host layout makes several Miryoku keys render as German punctuation
   (the `/` key types `-`, Sym's `KC_COLN` types `Ö`, Num's `KC_MINS`/`KC_LBRC`
-  type `ß`/`ü`). `'` is *not* reachable on this build — on a German layout that
-  is `Shift`+`#`, and Miryoku has no `#`/NUHS key.
+  type `ß`/`ü`). `'` is `Shift`+`#` on a German layout — supplied now by the
+  `KC_NUHS` key the left column gained, see §3.
+- **`encoder_update_user` returning `true` hands the event to the keyboard.**
+  `keyboards/sofle/sofle.c` defines a *strong* `encoder_update_kb` which, whenever
+  `encoder_update_user` returns `true`, taps `KC_PGUP`/`KC_PGDN` for index 1 or
+  `KC_VOLU`/`KC_VOLD` for index 0 **on top of** whatever the keymap just did.
+  Returning `true` for index 1 therefore paged twice per detent and put a page
+  scroll under every Nav arrow and every Num wheel step (visible in the HID
+  captures on 2026-10-03), which is why index 1 returns `false`. Index 0 still
+  returns `true` on purpose: two volume steps per detent is what this encoder has
+  always done.
+- The Sofle rev1 layout has **60 cells, including the two knob push buttons**
+  (`matrix [4,5]`/`[9,5]`, `x=6`/`9.5` in `rev1/keyboard.json`). They are not
+  separate switch positions, and this board's knobs are not wired to the matrix:
+  a keycode placed there can never be pressed (verified 2026-10-03 — pressing
+  either knob reports nothing).
 - The QMK CLI is repo-versioned: `userspace-*` subcommands only exist while
   `QMK_HOME` points at the modern submodule.
 - Before claiming a change works, run both (a) and (c) above. Firmware must stay
@@ -335,21 +388,36 @@ for d in /sys/class/hidraw/hidraw*; do
         echo "$d iface=$(cat "$d/device/../bInterfaceNumber") proto=$(cat "$d/device/../bInterfaceProtocol")";;
     esac
 done
-# → /sys/class/hidraw/hidraw5 iface=0 proto=1  (boot keyboard)
-# → /sys/class/hidraw/hidraw6 iface=1 proto=0  (raw HID)
+# → /dev/hidraw0 iface=0 proto=1  (boot keyboard)
+# → /dev/hidraw1 iface=1 proto=0  (extra reports: consumer/mouse/system)
+# the numbers move with enumeration order — resolve them with this loop
 
-timeout 60 stdbuf -oL xxd -p -c8 /dev/hidraw5   # 8 bytes: modifiers, rsvd, keycode[6]
+timeout 60 stdbuf -oL xxd -p -c8 /dev/hidraw0   # 8 bytes: modifiers, rsvd, keycode[6]
 ```
 
 Boot-protocol reports are enough to verify the matrix, the split link and the
 layer logic: each press/release is one report, and the keycode tells which layer
-resolved it. Consumer (volume/media), mouse and encoder reports leave over other
-HID interfaces that have **no** hidraw node — those need `sudo evtest` or the
-host's own OSD.
+resolved it. The `proto=0` node carries the *extra* reports, each prefixed with a
+report id (`tmk_core/protocol/report.h`): 1 keyboard, 2 mouse, 3 system,
+4 consumer. So media (`04 cd 00` play/pause, `04 e9 00`/`04 ea 00` volume ±),
+mouse-wheel (`02 00 00 00 ±01 00`) and encoder paths are observable without root
+(verified 2026-10-03; the note that used to be here claimed those needed `evtest`).
 
-Verified 2026-09-28 with both halves on this firmware, **with the Colemak-DH
-default that was in place before the QWERTY switch** (physical QWERTY keycap
-labels):
+Reports verified 2026-10-03, QWERTY alphas + German host, keys from §3:
+
+| press | report | means |
+|---|---|---|
+| left column, Q/A/Z rows | `00 00 32 00` / `2d` / `64` | `#`, `ß`, `<` (`Shift` on the first: `'`) |
+| number row, leftmost | `00 00 2e 00` | `´` |
+| number row `1` / `5` | `08 00 14 00` / `0a 00 14 00` | LGUI+Q (kitty) / +`Shift` (close window) |
+| number row, right innermost | `04 00 2c 00` | LAlt+Space (tmux special workspace) |
+| number row `8` (right) | silent on `proto=1`, `04 cd 00` on `proto=0` | play/pause |
+| right encoder — base / Nav held / Num held | `4b`/`4e` (PGUP/PGDN) · `51`/`52` (DOWN/UP) · `02 … ±01 …` | one action per detent, layer-correct |
+| left encoder | `04 e9 00` / `04 ea 00` | volume ±, two steps per detent (`sofle.c` adds one, §6) |
+| either knob pressed | nothing | knob push cells are unpopulated (§6) |
+
+Earlier, verified 2026-09-28, **with the Colemak-DH default that was in place
+before the QWERTY switch** (physical QWERTY keycap labels):
 
 | physical key | report | keycode | proves |
 |---|---|---|---|
@@ -375,3 +443,8 @@ Thumb keys (Miryoku defaults — "inner thumb" is ambiguous, so here is the map)
 | right | innermost, wide 1.5u | Sym | Enter |
 | right | middle | Num | Backspace |
 | right | outermost | Fun | Delete |
+
+Beyond those three per hand, each half has two more thumb switches: on the left
+they sit outboard of the Media/Esc thumb (`RM_TOGG` on the outermost, the next one
+spare); on the right they sit outboard of the Fun/Delete thumb and are both spare
+— see §3.
