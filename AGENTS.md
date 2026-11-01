@@ -104,8 +104,8 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 
 ### Effects: what is compiled, what exists, how to switch
 
-**Compiled in right now: eleven modes** — `SOLID_COLOR` (always compiled, mode 1)
-plus ten enabled effects. `RM_NEXT`/`RM_PREV` cycle exactly these:
+**Compiled in right now: eight modes** — `SOLID_COLOR` (always compiled, mode 1)
+plus seven enabled effects. `RM_NEXT`/`RM_PREV` cycle exactly these:
 
 | mode | effect | look |
 |---|---|---|
@@ -115,10 +115,8 @@ plus ten enabled effects. `RM_NEXT`/`RM_PREV` cycle exactly these:
 | 4 | `SOLID_REACTIVE_WIDE` | a wide glow radiates from each press |
 | 5 | `SOLID_REACTIVE_MULTIWIDE` | several wide glows at once |
 | 6 | `SPLASH` | a splash spreads out from each press |
-| 7 | `SOLID_SPLASH` | the same on the fully lit variant |
-| 8 | `MULTISPLASH` | several splashes at once |
-| 9 | `SOLID_MULTISPLASH` | and on the fully lit variant |
-| 10 | `CYCLE_LEFT_RIGHT` | a rainbow band moving across the columns |
+| 7 | `MULTISPLASH` | several splashes at once |
+| 8 | `SOLID_MULTISPLASH` | and on the fully lit variant |
 
 Mode 0 (`RGB_MATRIX_NONE`, all off) cannot be reached from a key — the step
 function wraps to 1.
@@ -162,13 +160,14 @@ it, then build and flash — the size check fails the build when it no longer fi
 216 B of RAM). See the comment block above the `#define`s in `config.h` for the
 cost of each effect in the current set.
 
-**Choosing at runtime** — six RGB keys are mapped:
+**Choosing at runtime** — five RGB keys are mapped:
 
 | key | cell | does |
 |---|---|---|
 | outermost left thumb | `[4,0]` | `RM_TOGG` — strip on/off |
-| left thumb next to it | `[4,1]` | `RM_PREV` — previous effect |
-| bottom-right outer key | `[8,0]` | `RM_NEXT` — next effect (cycles the eleven modes above) |
+| left thumb next to it | `[4,1]` | `LT(Mouse, KC_TAB)` — the built-in Mouse layer fallback |
+| bottom-right outer key | `[8,0]` | `RM_NEXT` — next effect (cycles the eight modes above) |
+| left inner wide thumb | `[4,4]` | `KC_F3` — Fievel Free Mouse Mode while held |
 | right number row, outermost | `[5,0]` | `RM_HUEU` — hue, wraps around |
 | right outermost thumb | `[9,0]` | `RM_VALU` — brighter |
 | right thumb next to it | `[9,1]` | `RM_VALD` — dimmer |
@@ -196,14 +195,15 @@ should not vanish while a layer is held. 54 of the 60 cells carry something.
 | left column, Q/A/Z rows | `KC_NUHS` `KC_MINS` `KC_NUBS` | `#`/`'`, `ß`/`?`, `<`/`>` |
 | right column, Q + A rows | `KC_LBRC` `KC_QUOT` | `ü`, `ä` (Miryoku's own cells; `custom_config.h` turns the cell one key inward into `ö`) |
 | outermost left thumb | `RM_TOGG` | RGB Matrix on/off |
-| left thumb next to it | `RM_PREV` | previous RGB effect |
-| bottom-right outer key (below `ä`) | `RM_NEXT` | next RGB effect (cycles ten) |
+| left inner wide thumb | `KC_F3` | Fievel Free Mouse Mode while held (host-side; overrides Miryoku's Mouse/Tab thumb) |
+| left thumb next to `RM_TOGG` | `LT(Mouse, KC_TAB)` | built-in Mouse layer, the fallback |
+| bottom-right outer key (below `ä`) | `RM_NEXT` | next RGB effect (cycles eight) |
 | right number row, outermost | `RM_HUEU` | hue, wraps |
 | right outer thumbs (`x=14`, `x=13`) | `RM_VALU`, `RM_VALD` | brighter / dimmer |
 | two spares | `KC_NO` | the Sofle's two knob push-button cells (`matrix [4,5]`/`[9,5]`, `x=6`/`9.5` in `rev1/keyboard.json`) — they exist in the keyboard but this board's knobs are not wired to the matrix, so nothing can press them |
 
-That exhausts the free cells: the four pressable spares now carry `RM_PREV`,
-`RM_HUEU`, `RM_VALU` and `RM_VALD`. See the effects section above for what the
+That exhausts the free cells: the four pressable spares now carry the built-in
+Mouse layer, `RM_HUEU`, `RM_VALU` and `RM_VALD`. See the effects section above for what the
 RGB keys do and how to change the set.
 
 `RM_*`, not `UG_*`: `UG_*` are RGBLIGHT keycodes and this build is RGB Matrix

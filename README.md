@@ -140,7 +140,7 @@ the small function):
 |---|---|---|
 | Media | `L27` (left, outer Miryoku thumb) | Esc |
 | Nav | `L26` (left, middle) | Space |
-| Mouse | `L25` (left, inner, 1.5u) | Tab |
+| Mouse | `L28` (left, next to the outer thumbs) | Tab |
 | Sym | `R25` (right, inner, 1.5u) | Enter |
 | Num | `R26` (right, middle) | Backspace |
 | Fun | `R27` (right, outer) | Delete |
@@ -165,8 +165,9 @@ same on **every** layer, so the numbers stay put while a layer is held.
 | `R2`–`R5` | right number row | media | prev track, play/pause, next track, mute |
 | `R12`, `R18` | right column, Q + A rows | `KC_LBRC` / `KC_QUOT` | `ü`, `ä` |
 | `L29` | outermost left thumb | `RM_TOGG` | RGB Matrix on/off |
-| `L28` | left thumb, next one in | `RM_PREV` | previous RGB effect |
-| `R24` | bottom-right outer key | `RM_NEXT` | next RGB effect (cycles eleven modes) |
+| `L25` | left inner wide thumb | `KC_F3` | while held: fievel Free Mouse Mode; overrides Miryoku's Mouse/Tab thumb |
+| `L28` | left thumb next to `RM_TOGG` | `LT(Mouse, KC_TAB)` | built-in Mouse layer (hold) and Tab (tap) — the fallback |
+| `R24` | bottom-right outer key | `RM_NEXT` | next RGB effect (cycles eight modes) |
 | `R6` | outermost right number row | `RM_HUEU` | hue, wraps |
 | `R29`, `R28` | the two outer right thumbs | `RM_VALU`, `RM_VALD` | brighter / dimmer; also dims the blue accents |
 
@@ -181,14 +182,31 @@ the two knob push-buttons, which this board does not wire to the matrix.
 |---|---|
 | Left encoder | volume up/down |
 | Right encoder | PgUp/PgDn on Base/Extra/Tap, Up/Down while Nav is held, mouse wheel on the other layers |
-| RGB presets | eleven modes — `SOLID_COLOR`, `SOLID_REACTIVE_SIMPLE` (default), `SOLID_REACTIVE`, `SOLID_REACTIVE_WIDE`, `SOLID_REACTIVE_MULTIWIDE`, `SPLASH`, `SOLID_SPLASH`, `MULTISPLASH`, `SOLID_MULTISPLASH`, `CYCLE_LEFT_RIGHT` — cycled with `RM_NEXT`/`RM_PREV`; mode, hue, brightness and fade live in EEPROM and survive a reboot |
+| RGB presets | eight modes — `SOLID_COLOR`, `SOLID_REACTIVE_SIMPLE` (default), `SOLID_REACTIVE`, `SOLID_REACTIVE_WIDE`, `SOLID_REACTIVE_MULTIWIDE`, `SPLASH`, `MULTISPLASH`, `SOLID_MULTISPLASH` — cycled with `RM_NEXT`; mode, hue, brightness and fade live in EEPROM and survive a reboot |
 | Blue accents | static: the off-grid ring, the outer column, the inner column and the thumbs of each half; a keypress pulse shows through them. The two knob LEDs (indices 0 and 36) are dimmer and are the only always-on light |
 | OLED | the half holding the USB cable shows TSNM / compiled alphas / live layer; the other half shows the logo |
 | LED table | this board's cell→LED order does not match the keyboard definition; it is replaced by a measured table (`led_table.h`) — see `AGENTS.md` §6 |
 
-Firmware size is **28614/28672 bytes** (58 B free) and RAM 2036/2560. Adding an
+Firmware size is **28642/28672 bytes** (30 B free) and RAM 2036/2560. Adding an
 effect costs 26–290 B depending on what code it shares, so measure first —
 `docs/effect-costs.txt` has every candidate's measured cost.
+
+### Host-side mouse replacement (fievel)
+
+A HID keyboard has no channel *from* the host, so the firmware cannot detect
+whether a host-side tool is running — "use fievel if present" has to be a
+placement decision, not an automatic switch. The split here:
+
+| key | while held | on tap |
+|---|---|---|
+| `L25`, left inner wide thumb | sends **`F3`** — [fievel](https://github.com/MontyTheSoftwareEngineer/fievel) in its default *hold* mode treats that as Free Mouse Mode | `F3` (harmless) |
+| `L28`, left thumb next to `RM_TOGG` | the built-in **Mouse layer** (`LT(Mouse, KC_TAB)`) — works on any host: BIOS, installers, login screens, VMs | Tab |
+
+Fievel's own defaults need no changes: `free_mouse = "f3"` and `mode = "hold"`
+are the shipped settings. Do **not** enable its remapper / home-row mods — ours
+are resolved in the firmware, before evdev, and work everywhere; enabling both
+would double-remap. Fievel's hint mode (click anything by typing its label) has
+no firmware equivalent and is the main reason to run it.
 
 ### Alphas and options
 

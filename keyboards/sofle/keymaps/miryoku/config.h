@@ -40,7 +40,7 @@ LALT(KC_SPC),  KC_MPRV,  KC_MPLY,       KC_MNXT,       KC_MUTE,       RM_HUEU, \
 KC_NUHS, K00,  K01,  K02,  K03,  K04,                 K05,  K06,  K07,  K08,  K09,  KC_LBRC, \
 KC_MINS, K10,  K11,  K12,  K13,  K14,                 K15,  K16,  K17,  K18,  K19,  KC_QUOT, \
 KC_NUBS, K20,  K21,  K22,  K23,  K24,  XXX,     XXX,  K25,  K26,  K27,  K28,  K29,  RM_NEXT, \
-                RM_TOGG,  RM_PREV,  K32,  K33,  K34,      K35,  K36,  K37,  RM_VALD,  RM_VALU \
+                RM_TOGG,  LT(5, KC_TAB),  K32,  K33,  KC_F3,      K35,  K36,  K37,  RM_VALD,  RM_VALU \
 )
 
 #define MASTER_LEFT
@@ -64,23 +64,20 @@ KC_NUBS, K20,  K21,  K22,  K23,  K24,  XXX,     XXX,  K25,  K26,  K27,  K28,  K2
 //   SOLID_REACTIVE_SIMPLE       the default: pressed keys flash and fade
 //   SOLID_REACTIVE              every LED lit, each press punches a fading hole
 //   SOLID_REACTIVE_WIDE         +462 B: the splash runner, a wide glow per press
-//   SPLASH / SOLID_SPLASH       +60/+58 B: a splash that spreads out
+//   SPLASH                      +60 B: a splash that spreads out
 //   MULTISPLASH                 +10 B: several splashes at once
 //   SOLID_MULTISPLASH           +8 B: and on the fully lit variant
 //   SOLID_REACTIVE_MULTIWIDE    +8 B: several wide glows at once
-//   CYCLE_LEFT_RIGHT            +28 B: a moving rainbow, the cheap classic
-// (NEXUS would add a converging splash for +116 B, CYCLE_UP_DOWN another +62 B;
-// neither fits alongside the above, so both are left out.)
+// (SOLID_SPLASH +58 B, NEXUS +116 B, CYCLE_UP_DOWN +62 B and CYCLE_LEFT_RIGHT +28 B
+// all fit individually but not alongside the above - the fallback keys came first.)
 #define RGB_MATRIX_KEYPRESSES
 #define ENABLE_RGB_MATRIX_SOLID_REACTIVE_SIMPLE
 #define ENABLE_RGB_MATRIX_SOLID_REACTIVE
 #define ENABLE_RGB_MATRIX_SOLID_REACTIVE_WIDE
 #define ENABLE_RGB_MATRIX_SOLID_REACTIVE_MULTIWIDE
 #define ENABLE_RGB_MATRIX_SPLASH
-#define ENABLE_RGB_MATRIX_SOLID_SPLASH
 #define ENABLE_RGB_MATRIX_MULTISPLASH
 #define ENABLE_RGB_MATRIX_SOLID_MULTISPLASH
-#define ENABLE_RGB_MATRIX_CYCLE_LEFT_RIGHT
 #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_SOLID_REACTIVE_SIMPLE
 
 // The pulse is the main light this keymap shows, and with the static pattern

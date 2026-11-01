@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1341" height="804" viewBox="0 0 1341 804" font-family="DejaVu Sans, Noto Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1341" height="828" viewBox="0 0 1341 828" font-family="DejaVu Sans, Noto Sans, sans-serif">
 <rect width="100%" height="100%" fill="#2b2f33"/>
 <text x="34" y="24" fill="#fff" font-size="16" font-weight="bold">Sofle rev1 / Miryoku &#8212; base layer, with key numbers</text>
 <rect x="34" y="89" width="69" height="69" rx="7" fill="#b9d9f2" stroke="#1b1e21" stroke-width="1.2"/>
@@ -82,8 +82,9 @@
 <rect x="145" y="376" width="69" height="69" rx="7" fill="#ffd39a" stroke="#1b1e21" stroke-width="1.2"/>
 <text x="180" y="415" text-anchor="middle" font-size="10" font-weight="bold" fill="#1b1e21">RGB on/off</text>
 <text x="180" y="439" text-anchor="middle" font-size="11" fill="#70747a">L29</text>
-<rect x="219" y="357" width="69" height="69" rx="7" fill="#ffd39a" stroke="#1b1e21" stroke-width="1.2"/>
-<text x="254" y="396" text-anchor="middle" font-size="9" font-weight="bold" fill="#1b1e21">prev effect</text>
+<rect x="219" y="357" width="69" height="69" rx="7" fill="#ffe8a3" stroke="#1b1e21" stroke-width="1.2"/>
+<text x="254" y="392" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b1e21">Tab</text>
+<text x="254" y="408" text-anchor="middle" font-size="10" fill="#55595d">hold Mouse</text>
 <text x="254" y="420" text-anchor="middle" font-size="11" fill="#70747a">L28</text>
 <rect x="293" y="359" width="69" height="69" rx="7" fill="#ffe8a3" stroke="#1b1e21" stroke-width="1.2"/>
 <text x="328" y="394" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b1e21">Esc</text>
@@ -93,9 +94,8 @@
 <text x="402" y="402" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b1e21">Space</text>
 <text x="402" y="418" text-anchor="middle" font-size="10" fill="#55595d">hold Nav</text>
 <text x="402" y="430" text-anchor="middle" font-size="11" fill="#70747a">L26</text>
-<rect x="478" y="366" width="106" height="69" rx="7" fill="#ffe8a3" stroke="#1b1e21" stroke-width="1.2"/>
-<text x="531" y="402" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b1e21">Tab</text>
-<text x="531" y="418" text-anchor="middle" font-size="10" fill="#55595d">hold Mouse</text>
+<rect x="478" y="366" width="106" height="69" rx="7" fill="#cfe3c0" stroke="#1b1e21" stroke-width="1.2"/>
+<text x="531" y="406" text-anchor="middle" font-size="10" font-weight="bold" fill="#1b1e21">hold F3 (fievel)</text>
 <text x="531" y="430" text-anchor="middle" font-size="11" fill="#70747a">L25</text>
 <rect x="1181" y="89" width="69" height="69" rx="7" fill="#ffd39a" stroke="#1b1e21" stroke-width="1.2"/>
 <text x="1216" y="128" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b1e21">hue</text>
@@ -214,10 +214,13 @@
 <text x="64" y="651.65" fill="#d6d9dc" font-size="12.5">tmux special workspace</text>
 <rect x="34" y="662.65" width="20" height="15" rx="3" fill="#ffd39a" stroke="#1b1e21" stroke-width="1"/>
 <text x="64" y="675.65" fill="#d6d9dc" font-size="12.5">RGB Matrix control</text>
-<text x="34" y="707.65" fill="#9aa0a6" font-size="11.5">Bold = what the key sends on the base layer, decoded from the compiled keymap and rendered for a German host.</text>
-<text x="34" y="726.65" fill="#9aa0a6" font-size="11.5">Grey = the key number: each half counted from its inner edge outwards and top to bottom - L1..L6 / R1..R6 the number row, then six per row,</text>
-<text x="34" y="745.65" fill="#9aa0a6" font-size="11.5">L25..L29 / R25..R29 the thumbs (wide inner one first). The README refers to keys by these numbers.</text>
-<text x="34" y="764.65" fill="#9aa0a6" font-size="11.5">All 24 cells outside Miryoku's 36 behave the same on every layer, so a function row never disappears while a layer is held.</text>
-<text x="34" y="783.65" fill="#9aa0a6" font-size="11.5">Encoder 1 (left) = volume. Encoder 2 (right) = PgUp/PgDn, or Up/Down while Nav is held, or the mouse wheel on the other layers. Both knobs double as LEDs 0 and 36 (dim blue).</text>
-<text x="34" y="802.65" fill="#9aa0a6" font-size="11.5">The OLED shows TSNM / alphas / layer on the half holding the USB cable, the logo on the other. Miryoku's layer contents: users/manna-harbour_miryoku/readme.org.</text>
+<rect x="34" y="686.65" width="20" height="15" rx="3" fill="#cfe3c0" stroke="#1b1e21" stroke-width="1"/>
+<text x="64" y="699.65" fill="#d6d9dc" font-size="12.5">host tool: hold sends F3 (fievel Free Mouse Mode)</text>
+<text x="34" y="731.65" fill="#9aa0a6" font-size="11.5">Bold = what the key sends on the base layer, decoded from the compiled keymap and rendered for a German host.</text>
+<text x="34" y="750.65" fill="#9aa0a6" font-size="11.5">Grey = the key number: each half counted from its inner edge outwards and top to bottom - L1..L6 / R1..R6 the number row, then six per row,</text>
+<text x="34" y="769.65" fill="#9aa0a6" font-size="11.5">L25..L29 / R25..R29 the thumbs (wide inner one first). The README refers to keys by these numbers.</text>
+<text x="34" y="788.65" fill="#9aa0a6" font-size="11.5">All 24 cells outside Miryoku's 36 behave the same on every layer, so a function row never disappears while a layer is held.</text>
+<text x="34" y="807.65" fill="#9aa0a6" font-size="11.5">Encoder 1 (left) = volume. Encoder 2 (right) = PgUp/PgDn, or Up/Down while Nav is held, or the mouse wheel on the other layers. Both knobs double as LEDs 0 and 36 (dim blue).</text>
+<text x="34" y="826.65" fill="#9aa0a6" font-size="11.5">The OLED shows TSNM / alphas / layer on the half holding the USB cable, the logo on the other. Miryoku's layer contents: users/manna-harbour_miryoku/readme.org.</text>
+<text x="34" y="845.65" fill="#9aa0a6" font-size="11.5">L25 sends F3 while held - with fievel running in hold mode that is Free Mouse Mode; L28 keeps the built-in Mouse layer (hold) and Tab (tap) as the fallback.</text>
 </svg>

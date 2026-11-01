@@ -38,7 +38,7 @@ EXTRA = {
     (0, 0): ('´ / `', 'german'), (0, 1): ('kitty', 'app'), (0, 2): ('wofi', 'app'),
     (0, 3): ('dolphin', 'app'), (0, 4): ('fullscreen', 'app'), (0, 5): ('close win', 'app'),
     (1, 0): ('# / \'', 'german'), (2, 0): ('ß / ?', 'german'), (3, 0): ('< / >', 'german'),
-    (4, 0): ('RGB on/off', 'rgb'), (4, 1): ('prev effect', 'rgb'),
+    (4, 0): ('RGB on/off', 'rgb'), (4, 4): ('hold F3 (fievel)', 'fievel'),
     (5, 0): ('hue', 'rgb'), (5, 1): ('mute', 'media'), (5, 2): ('next track', 'media'),
     (5, 3): ('play/pause', 'media'), (5, 4): ('prev track', 'media'), (5, 5): ('tmux ws', 'tmux'),
     (6, 0): ('ü', 'german'), (7, 0): ('ä', 'german'),
@@ -66,6 +66,7 @@ CATS = {
     'media':  ('#c7e6c9', 'media key'),
     'tmux':   ('#bfe6d8', 'tmux special workspace'),
     'rgb':    ('#ffd39a', 'RGB Matrix control'),
+    'fievel': ('#cfe3c0', 'host tool: hold sends F3 (fievel Free Mouse Mode)'),
 }
 
 
@@ -207,6 +208,7 @@ def main():
         'All 24 cells outside Miryoku\'s 36 behave the same on every layer, so a function row never disappears while a layer is held.',
         'Encoder 1 (left) = volume. Encoder 2 (right) = PgUp/PgDn, or Up/Down while Nav is held, or the mouse wheel on the other layers. Both knobs double as LEDs 0 and 36 (dim blue).',
         'The OLED shows TSNM / alphas / layer on the half holding the USB cable, the logo on the other. Miryoku\'s layer contents: users/manna-harbour_miryoku/readme.org.',
+        'L25 sends F3 while held - with fievel running in hold mode that is Free Mouse Mode; L28 keeps the built-in Mouse layer (hold) and Tab (tap) as the fallback.',
     ]:
         s.append(f'<text x="{MARGIN}" y="{ly}" fill="#9aa0a6" font-size="11.5">{esc(line)}</text>')
         ly += 19
