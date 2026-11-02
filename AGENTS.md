@@ -97,7 +97,7 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 | feature | implementation |
 |---|---|
 | Per-key LEDs | **RGB Matrix** with the Sofle's own LED layout, but with the **corrected** cell→LED table in `led_table.h` — the keyboard's own table is wrong, see §6. Ten effects are enabled (see the effects section); the default `SOLID_REACTIVE_SIMPLE` makes each pressed key pulse, and the static accents are painted in `keymap.c` |
-| Pulse feel | Nothing is forced at boot: mode, hue, brightness and speed live in EEPROM, so `RM_NEXT`/`RM_PREV`/`RM_HUEU`/`RM_VALU`/`RM_VALD` choices survive a reboot. `RGB_MATRIX_MAXIMUM_BRIGHTNESS` 200 and `RGB_MATRIX_DEFAULT_SPD` 32 (≈2 s fade) are what a *fresh* EEPROM gets — see the effects section |
+| Pulse feel | Nothing is forced at boot: mode, hue, brightness and speed live in EEPROM, so `RM_NEXT`/`RM_HUEU`/`RM_VALU`/`RM_VALD` choices survive a reboot. `RGB_MATRIX_MAXIMUM_BRIGHTNESS` 200 and `RGB_MATRIX_DEFAULT_SPD` 32 (≈2 s fade) are what a *fresh* EEPROM gets — see the effects section |
 | OLED (master) | `print_status_narrow()`, rotated 270°: small logo, `TSNM`, the compiled alphas (`Qwrtz` by default, see `rules.mk`), active layer name |
 | OLED (slave) | `render_logo()`, 128x32 bitmap, default rotation |
 | Encoders | `encoder_update_user()`: index 0 = volume; index 1 per layer — `KC_PGUP`/`KC_PGDN` on Base/Extra/Tap, `KC_UP`/`KC_DOWN` on Nav, `MS_WHLU`/`MS_WHLD` on the other six. Clockwise is the negative direction everywhere. Index 1 **must** return `false` — see the trap in §6 |
@@ -105,7 +105,7 @@ from the vendored Miryoku tree via `INTROSPECTION_KEYMAP_C` in
 ### Effects: what is compiled, what exists, how to switch
 
 **Compiled in right now: eight modes** — `SOLID_COLOR` (always compiled, mode 1)
-plus seven enabled effects. `RM_NEXT`/`RM_PREV` cycle exactly these:
+plus seven enabled effects. `RM_NEXT` cycles exactly these:
 
 | mode | effect | look |
 |---|---|---|

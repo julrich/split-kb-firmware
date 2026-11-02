@@ -58,7 +58,7 @@ KC_NUBS, K20,  K21,  K22,  K23,  K24,  XXX,     XXX,  K25,  K26,  K27,  K28,  K2
 // effects need. The static accent pattern is painted in keymap.c.
 //
 // Enabled effects - `RM_NEXT` cycles exactly these (plus SOLID_COLOR, which QMK
-// always compiles) in this order, and `RM_PREV` walks back. Marginal flash cost
+// always compiles) in this order, cycled forward by `RM_NEXT`. Marginal flash cost
 // measured 2026-10-05 (~/effect-costs.txt); the whole set is what fits in the
 // budget, not the budget being generous:
 //   SOLID_REACTIVE_SIMPLE       the default: pressed keys flash and fade

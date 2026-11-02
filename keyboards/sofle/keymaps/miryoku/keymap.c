@@ -34,7 +34,7 @@
 
 // ---------------------------------------------------------------- ACCENTS --
 // The mode and the brightness/colour/speed live in EEPROM - nothing is forced at
-// boot, so `RM_NEXT`/`RM_PREV`/`RM_HUEU`/`RM_VALU`/`RM_VALD` choices survive a
+// boot, so `RM_NEXT`/`RM_HUEU`/`RM_VALU`/`RM_VALD` choices survive a
 // reboot. A fresh EEPROM gets `RGB_MATRIX_DEFAULT_MODE` and the cap/`DEFAULT_SPD`
 // from config.h.
 //
