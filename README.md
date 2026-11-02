@@ -203,10 +203,27 @@ placement decision, not an automatic switch. The split here:
 | `L28`, left thumb next to `RM_TOGG` | the built-in **Mouse layer** (`LT(Mouse, KC_TAB)`) — works on any host: BIOS, installers, login screens, VMs | Tab |
 
 Fievel's own defaults need no changes: `free_mouse = "f3"` and `mode = "hold"`
-are the shipped settings. Do **not** enable its remapper / home-row mods — ours
-are resolved in the firmware, before evdev, and work everywhere; enabling both
-would double-remap. Fievel's hint mode (click anything by typing its label) has
-no firmware equivalent and is the main reason to run it.
+are the shipped settings, and holding `L25` enters Free Mouse Mode with H/J/K/L,
+`I` right-click, `N M , .` scroll, `A`/`S` slow/fast and `Q` locate. Its unit
+must actually be running — `systemctl --user enable --now fievel` — otherwise the
+F3 goes nowhere and Super+Space does nothing (the failure seen on 2026-11-02: the
+service had been stopped and was not enabled).
+
+Measured 2026-11-02 with the HID capture: holding `L25` sends `00 00 3c` and the
+movement keys arrive as `00 00 3c 0b/0d/…` — no modifier bits — so our home-row
+mod-taps do not disturb Free Mouse Mode, and fievel consumes the keys it uses.
+
+Two defaults do sit on tap-holds: `left_click = "space"` is the Space thumb,
+which *holds the Nav layer* when held (so dragging is awkward), and
+`scroll_right = "."` is `R22`, which holds RALT. If either bothers you, point
+them at plain keys — `left_click = "p"` (`R11`) and `scroll_right = "b"` (`L19`)
+work.
+
+Do **not** enable fievel's remapper / home-row mods: ours are resolved in the
+firmware, before evdev, and work everywhere; enabling both would double-remap.
+Fievel's hint mode (click anything by typing its label; Super+Space, i.e. hold
+`a` and tap the Space thumb) has no firmware equivalent and is the main reason to
+run it.
 
 ### Alphas and options
 
