@@ -51,6 +51,8 @@ MOD_NAMES = [(0x01, 'CTL'), (0x02, 'SFT'), (0x04, 'ALT'), (0x08, 'GUI')]
 # HID usage -> what it types on a German host (only where that differs from US)
 DE = {0x1C: 'z', 0x1D: 'y', 0x2D: 'ß', 0x2E: '´', 0x2F: 'ü', 0x33: 'ö', 0x34: 'ä',
       0x32: '#', 0x64: '<', 0x36: ',', 0x37: '.', 0x38: '-'}
+# usage -> what Shift makes of it on a German host (letters -> capitals: omitted)
+SHIFTED = {0x2E: '`', 0x2D: '?', 0x32: "'", 0x64: '>', 0x36: ';', 0x37: ':', 0x38: '_'}
 KC = {'28': 'Enter', '29': 'Esc', '2A': 'Backspace', '2B': 'Tab', '2C': 'Space',
       '4C': 'Del', '4A': 'Home', '4D': 'End', '4E': 'PgDn', '4B': 'PgUp',
       '49': 'Ins', '4F': 'Right', '50': 'Left', '51': 'Down', '52': 'Up',
@@ -105,24 +107,28 @@ def mod_of(mod):
     return base or 'mod'
 
 
+def shifted_of(tap):
+    return SHIFTED.get(tap)
+
+
 def describe(code):
-    """-> (tap function, hold label or None, category) from a compiled keycode."""
+    """-> (tap function, hold label or None, category, shifted symbol) from a compiled keycode."""
     if code == 0:
-        return ('-', None, 'base')
+        return ('-', None, 'base', None)
     if 0x4000 <= code <= 0x4FFF:                    # layer-tap
         layer = (code >> 8) & 0x0F
         tap = code & 0xFF
         name = LAYER_NAMES[layer] if layer < len(LAYER_NAMES) else 'L%d' % layer
-        return (char_of(tap) if tap else '-', 'hold ' + name, 'layer')
+        return (char_of(tap) if tap else '-', 'hold ' + name, 'layer', shifted_of(tap))
     if 0x2000 <= code <= 0x3FFF:                    # mod-tap
-        return (char_of(code & 0xFF), 'hold ' + mod_of((code >> 8) & 0x1F), 'mod')
+        return (char_of(code & 0xFF), 'hold ' + mod_of((code >> 8) & 0x1F), 'mod', shifted_of(code & 0xFF))
     if 0x0100 <= code <= 0x1FFF:                    # hsv/mod-chord: real mods + usage
-        return ('%s+%s' % (mod_of((code >> 8) & 0x1F), char_of(code & 0xFF)), None, 'base')
+        return ('%s+%s' % (mod_of((code >> 8) & 0x1F), char_of(code & 0xFF)), None, 'base', None)
     if 0x7800 <= code <= 0x78FF:                    # RGB Matrix keycode
         rgb = {0x7842: 'RGB on/off', 0x7843: 'next effect', 0x7844: 'prev effect',
                0x7845: 'hue', 0x7849: 'brighter', 0x784A: 'dimmer'}
-        return (rgb.get(code, '0x%04X' % code), None, 'rgb')
-    return (char_of(code), None, 'base')
+        return (rgb.get(code, '0x%04X' % code), None, 'rgb', None)
+    return (char_of(code), None, 'base', shifted_of(code))
 
 
 def esc(s):
@@ -166,8 +172,9 @@ def main():
         if (r, c) in EXTRA:
             func, cat = EXTRA[(r, c)]
             hold = None
+            shifted = None
         else:
-            func, hold, cat = describe(codes[(r, c)])
+            func, hold, cat, shifted = describe(codes[(r, c)])
         fill = CATS[cat][0]
         cx, cy = px(x, y)
         wide = (r, c) in ((4, 4), (9, 4))
@@ -182,6 +189,9 @@ def main():
         if hold:
             s.append(f'<text x="{cx + w / 2:.0f}" y="{cy + U / 2 + 14:.0f}" text-anchor="middle" '
                      f'font-size="{fit(hold, 10, inner)}" fill="#55595d">{esc(hold)}</text>')
+        if shifted:
+            s.append(f'<text x="{cx + w - 6:.0f}" y="{cy + 15:.0f}" text-anchor="end" '
+                     f'font-size="12" fill="#8a4b00">{esc(shifted)}</text>')
         s.append(f'<text x="{cx + w / 2:.0f}" y="{cy + U - 11:.0f}" text-anchor="middle" '
                  f'font-size="{fit(cap, 11, inner)}" fill="#70747a">{esc(cap)}</text>')
 
