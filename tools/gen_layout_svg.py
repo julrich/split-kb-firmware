@@ -171,11 +171,10 @@ def main():
     x0, y0 = min(xs), min(ys)
     W = (max(xs) - x0 + 1.7) * U + 2 * MARGIN
     keys_h = (max(ys) - y0 + 1.35) * U
-    block_h = 34 + keys_h + 26
     legend_h = 24 * (len(CATS) + 1) + 150
-    H = MARGIN + 2 * block_h + legend_h
+    H = MARGIN + keys_h + legend_h
 
-    def draw_block(s, codes, oy, title):
+    def draw_block(s, codes, sym_codes, oy, title):
         s.append(f'<text x="{MARGIN}" y="{oy + 16}" fill="#fff" font-size="15" '
                  f'font-weight="bold">{esc(title)}</text>')
         top = oy + 30
@@ -193,6 +192,11 @@ def main():
                 shifted = None
             else:
                 func, hold, cat, shifted = describe(codes[(r, c)])
+            sym = None
+            if (r, c) not in EXTRA:
+                sf, sh, _sc, _ss = describe(sym_codes[(r, c)])
+                if sf != '-' and (sf, sh) != (func, hold):
+                    sym = sf
             fill = CATS[cat][0]
             cx, cy = px(x, y)
             wide = (r, c) in ((4, 4), (9, 4))
@@ -207,6 +211,9 @@ def main():
             if hold:
                 s.append(f'<text x="{cx + w / 2:.0f}" y="{cy + U / 2 + 14:.0f}" text-anchor="middle" '
                          f'font-size="{fit(hold, 10, inner)}" fill="#55595d">{esc(hold)}</text>')
+            if sym:
+                s.append(f'<text x="{cx + 6:.0f}" y="{cy + 15:.0f}" '
+                         f'font-size="{fit(sym, 11, w * 0.45)}" fill="#1c4f82">{esc(sym)}</text>')
             if shifted:
                 s.append(f'<text x="{cx + w - 6:.0f}" y="{cy + 15:.0f}" text-anchor="end" '
                          f'font-size="12" fill="#8a4b00">{esc(shifted)}</text>')
@@ -224,15 +231,12 @@ def main():
          f'viewBox="0 0 {W:.0f} {H:.0f}" font-family="DejaVu Sans, Noto Sans, sans-serif">',
          '<rect width="100%" height="100%" fill="#2b2f33"/>',
          f'<text x="{MARGIN}" y="24" fill="#fff" font-size="16" font-weight="bold">'
-         f'Sofle rev1 / Miryoku &#8212; base and SYM layers, with key numbers</text>']
+         f'Sofle rev1 / Miryoku &#8212; base layer with key numbers, SYM values and shifted symbols</text>']
 
-    y_sym = MARGIN + 12
-    y_base = y_sym + block_h
-    draw_block(s, read_layer(8), y_sym,
-               'SYM layer (hold the Enter key R25) \u2014 the symbols, rendered for a German host')
-    draw_block(s, read_layer(0), y_base, 'Base layer (the layer you type on)')
+    draw_block(s, read_layer(0), read_layer(8), MARGIN + 12,
+               'Base layer \u2014 blue is the same key on SYM (hold R25)')
 
-    ly = y_base + block_h + 14
+    ly = MARGIN + 12 + 30 + keys_h + 40
     s.append(f'<text x="{MARGIN}" y="{ly}" fill="#fff" font-size="14" font-weight="bold">Legend</text>')
     ly += 24
     for cat, (fill, label) in CATS.items():
@@ -242,10 +246,11 @@ def main():
         ly += 24
     ly += 8
     for line in [
-        'Bold = what the key sends on that layer, decoded from the compiled keymap and rendered for a German host.',
-        'Orange mark in a corner = what that key gives with Shift (symbols only; letters just capitalise).',
+        'Bold = what the key sends on the base layer, decoded from the compiled keymap and rendered for a German host.',
+        'Blue, upper left = what the same key gives on the SYM layer (hold R25). Left out where it is identical or empty.',
+        'Orange, upper right = what the key gives with Shift (symbols only; letters just capitalise).',
         'Miryoku\'s SYM layer is laid out for a US keyboard, so on a German host its symbol keys land on other characters:',
-        'Shift+2 gives ", Shift+3 gives §, Shift+8 gives (, Shift+[ gives Ü, Shift+; gives Ö, Shift+7 gives / - all shown as they type here.',
+        'on SYM, Shift+2 gives ", Shift+3 gives §, Shift+8 gives (, Shift+[ gives Ü, Shift+; gives Ö, Shift+7 gives /.',
         'Grey = the key number: each half counted from its inner edge outwards and top to bottom - L1..L6 / R1..R6 the number row, then six per row,',
         'L25..L29 / R25..R29 the thumbs (wide inner one first). The README refers to keys by these numbers.',
         'All 24 cells outside Miryoku\'s 36 behave the same on every layer, so a function row never disappears while a layer is held.',

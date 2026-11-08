@@ -116,10 +116,11 @@ Never plug or unplug the TRRS cable while USB is connected. The bootloader is
 
 ![Sofle rev1 / Miryoku layout with this board's caps](docs/sofle-layout.png)
 
-Two blocks: the **SYM layer** (what holding `R25`, the Enter thumb, gives you)
-above the **base layer**. Every key: bold = what it sends on that layer (German
-host, decoded from the *compiled* keymap, tap-hold layers included); the orange
-mark in a corner is what Shift adds; grey = the **key number**:
+Every key: bold = what it sends on the base layer (German host, decoded from the
+*compiled* keymap, tap-hold layers included); the blue character in a key's
+**upper left** is what that same key gives on the **SYM layer** (hold `R25`),
+omitted where it is unchanged or empty; the **orange** mark in the upper right is
+what Shift adds; grey = the **key number**:
 each half counted from its inner edge outward and top to bottom — `L1`–`L6` /
 `R1`–`R6` the number row, six per row after that, `L25`–`L29` / `R25`–`R29` the
 thumbs (the wide inner one first). The tables below refer to keys by these
